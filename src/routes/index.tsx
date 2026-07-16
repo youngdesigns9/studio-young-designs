@@ -1021,9 +1021,11 @@ function Home() {
       <main>
         <Hero />
         <About />
+        <Marquee items={["Since 1984", "Bespoke Interiors", "40+ Years", "Bangalore", "Timeless Craft"]} />
         <Why />
         <Services />
         <Portfolio />
+        <Marquee dark items={["700+ Homes", "Turnkey Execution", "Walnut · Stone · Brass", "In-House Atelier"]} />
         <Process />
         <Counters />
         <Testimonials />
