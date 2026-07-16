@@ -119,6 +119,105 @@ function SplitHeading({ text, className = "" }: { text: string; className?: stri
   );
 }
 
+/* Word with animated gold underline brush + highlight glow */
+function Highlight({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <span ref={ref} className="relative inline-block whitespace-nowrap italic">
+      <span className={dark ? "text-gold" : "text-walnut"}>{children}</span>
+      <motion.span
+        aria-hidden
+        initial={{ scaleX: 0 }}
+        animate={inView ? { scaleX: 1 } : {}}
+        transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformOrigin: "left" }}
+        className="pointer-events-none absolute -bottom-1 left-0 block h-[6px] w-full rounded-full bg-gold/70 blur-[1px]"
+      />
+    </span>
+  );
+}
+
+/* Magnetic hover wrapper — pulls child toward cursor */
+function Magnetic({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 200, damping: 15, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 200, damping: 15, mass: 0.4 });
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={(e) => {
+        const r = ref.current!.getBoundingClientRect();
+        x.set(((e.clientX - r.left) / r.width - 0.5) * 24);
+        y.set(((e.clientY - r.top) / r.height - 0.5) * 16);
+      }}
+      onMouseLeave={() => {
+        x.set(0);
+        y.set(0);
+      }}
+      style={{ x: sx, y: sy }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* Infinite marquee band */
+function Marquee({
+  items,
+  dark = false,
+}: {
+  items: string[];
+  dark?: boolean;
+}) {
+  const row = [...items, ...items, ...items];
+  return (
+    <div
+      className={`relative overflow-hidden border-y ${
+        dark ? "border-cream/15 bg-charcoal text-cream" : "border-border bg-cream text-foreground"
+      } py-8`}
+    >
+      <motion.div
+        animate={{ x: ["0%", "-33.333%"] }}
+        transition={{ duration: 40, ease: "linear", repeat: Infinity }}
+        className="flex whitespace-nowrap"
+      >
+        {row.map((t, i) => (
+          <span key={i} className="mx-10 flex items-center gap-10 font-display text-4xl md:text-6xl">
+            {t}
+            <span className="inline-block h-2 w-2 rotate-45 bg-gold" />
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+/* Cursor-follow "View" tag inside a container */
+function useCursorTag(containerRef: React.RefObject<HTMLElement | null>) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 300, damping: 25 });
+  const sy = useSpring(y, { stiffness: 300, damping: 25 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const move = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect();
+      x.set(e.clientX - r.left);
+      y.set(e.clientY - r.top);
+    };
+    el.addEventListener("mousemove", move);
+    return () => el.removeEventListener("mousemove", move);
+  }, [containerRef, x, y]);
+  return { x: sx, y: sy };
+}
+
+
+
 /* --------------------------------- Hero -------------------------------- */
 function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -167,10 +266,43 @@ function Hero() {
             <span className="gold-rule" />
             <span className="eyebrow text-white/70">Est. 1984 · Bangalore</span>
           </motion.div>
-          <SplitHeading
-            text="Crafting Timeless Interiors for Over 40 Years."
-            className="text-white text-[13vw] sm:text-6xl md:text-7xl lg:text-[5.5rem]"
-          />
+          <h1 className="font-display leading-[1.02] tracking-tight text-white text-[13vw] sm:text-6xl md:text-7xl lg:text-[5.5rem]">
+            {["Crafting", "Timeless", "Interiors"].map((w, i) => (
+              <span key={i} className="inline-block overflow-hidden pb-2 pr-[0.28em] align-bottom">
+                <motion.span
+                  className="inline-block"
+                  initial={{ y: "110%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 1.1, delay: 0.3 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {w}
+                </motion.span>
+              </span>
+            ))}
+            <br />
+            {["for", "Over"].map((w, i) => (
+              <span key={i} className="inline-block overflow-hidden pb-2 pr-[0.28em] align-bottom">
+                <motion.span
+                  className="inline-block"
+                  initial={{ y: "110%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 1.1, delay: 0.6 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {w}
+                </motion.span>
+              </span>
+            ))}
+            <span className="inline-block overflow-hidden pb-2 pr-[0.28em] align-bottom">
+              <motion.span
+                className="inline-block"
+                initial={{ y: "110%" }}
+                animate={{ y: "0%" }}
+                transition={{ duration: 1.1, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Highlight dark>40 Years.</Highlight>
+              </motion.span>
+            </span>
+          </h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -186,19 +318,27 @@ function Hero() {
             transition={{ duration: 1, delay: 1.3 }}
             className="mt-10 flex flex-wrap items-center gap-4"
           >
-            <a
-              href="#portfolio"
-              className="group inline-flex items-center gap-3 bg-white px-7 py-4 text-[11px] uppercase tracking-[0.28em] text-charcoal transition-all hover:bg-gold"
-            >
-              Explore Projects
-              <span className="transition-transform group-hover:translate-x-1">→</span>
-            </a>
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-3 border border-white/70 px-7 py-4 text-[11px] uppercase tracking-[0.28em] text-white transition-all hover:bg-white hover:text-charcoal"
-            >
-              Book a Consultation
-            </a>
+            <Magnetic>
+              <a
+                href="#portfolio"
+                className="group relative inline-flex items-center gap-3 overflow-hidden bg-white px-7 py-4 text-[11px] uppercase tracking-[0.28em] text-charcoal"
+              >
+                <span className="absolute inset-0 origin-left scale-x-0 bg-gold transition-transform duration-500 ease-out group-hover:scale-x-100" />
+                <span className="relative">Explore Projects</span>
+                <span className="relative transition-transform duration-500 group-hover:translate-x-1">→</span>
+              </a>
+            </Magnetic>
+            <Magnetic>
+              <a
+                href="#contact"
+                className="group relative inline-flex items-center gap-3 overflow-hidden border border-white/70 px-7 py-4 text-[11px] uppercase tracking-[0.28em] text-white"
+              >
+                <span className="absolute inset-0 origin-right scale-x-0 bg-white transition-transform duration-500 ease-out group-hover:origin-left group-hover:scale-x-100" />
+                <span className="relative transition-colors duration-500 group-hover:text-charcoal">
+                  Book a Consultation
+                </span>
+              </a>
+            </Magnetic>
           </motion.div>
         </div>
 
@@ -493,36 +633,62 @@ function Portfolio() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {pieces.map((p, i) => (
             <Reveal key={p.title} delay={(i % 2) * 0.1}>
-              <a
-                href="#contact"
-                className={`group relative block overflow-hidden bg-muted ${
-                  p.h === "tall" ? "aspect-[4/5]" : "aspect-[4/3]"
-                }`}
-              >
-                <img
-                  src={p.img}
-                  alt={p.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.05]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90" />
-                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-8">
-                  <div className="text-white">
-                    <div className="eyebrow text-white/70">{p.place}</div>
-                    <div className="mt-2 font-display text-2xl md:text-3xl">{p.title}</div>
-                  </div>
-                  <div className="translate-y-2 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-                    <span className="grid h-12 w-12 place-items-center rounded-full border border-white/70 text-white">
-                      →
-                    </span>
-                  </div>
-                </div>
-              </a>
+              <PortfolioCard piece={p} />
             </Reveal>
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function PortfolioCard({
+  piece,
+}: {
+  piece: { img: string; title: string; place: string; h: string };
+}) {
+  const ref = useRef<HTMLAnchorElement>(null);
+  const { x, y } = useCursorTag(ref);
+  const [hover, setHover] = useState(false);
+  return (
+    <a
+      ref={ref}
+      href="#contact"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className={`group relative block overflow-hidden bg-muted ${
+        piece.h === "tall" ? "aspect-[4/5]" : "aspect-[4/3]"
+      }`}
+    >
+      <img
+        src={piece.img}
+        alt={piece.title}
+        loading="lazy"
+        className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.08]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90" />
+      <motion.div
+        style={{ x, y }}
+        animate={{ opacity: hover ? 1 : 0, scale: hover ? 1 : 0.6 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="pointer-events-none absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2"
+      >
+        <span className="grid h-24 w-24 place-items-center rounded-full bg-gold font-display text-sm uppercase tracking-[0.24em] text-charcoal">
+          View
+        </span>
+      </motion.div>
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-8">
+        <div className="text-white">
+          <div className="eyebrow text-white/70">{piece.place}</div>
+          <div className="mt-2 overflow-hidden">
+            <span className="block font-display text-2xl transition-transform duration-500 group-hover:-translate-y-1 md:text-3xl">
+              {piece.title}
+            </span>
+          </div>
+          <span className="mt-3 block h-px w-8 bg-gold transition-all duration-500 group-hover:w-24" />
+        </div>
+      </div>
+    </a>
   );
 }
 
@@ -881,9 +1047,11 @@ function Home() {
       <main>
         <Hero />
         <About />
+        <Marquee items={["Since 1984", "Bespoke Interiors", "40+ Years", "Bangalore", "Timeless Craft"]} />
         <Why />
         <Services />
         <Portfolio />
+        <Marquee dark items={["700+ Homes", "Turnkey Execution", "Walnut · Stone · Brass", "In-House Atelier"]} />
         <Process />
         <Counters />
         <Testimonials />
