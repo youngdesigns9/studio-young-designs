@@ -119,6 +119,105 @@ function SplitHeading({ text, className = "" }: { text: string; className?: stri
   );
 }
 
+/* Word with animated gold underline brush + highlight glow */
+function Highlight({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <span ref={ref} className="relative inline-block whitespace-nowrap italic">
+      <span className={dark ? "text-gold" : "text-walnut"}>{children}</span>
+      <motion.span
+        aria-hidden
+        initial={{ scaleX: 0 }}
+        animate={inView ? { scaleX: 1 } : {}}
+        transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformOrigin: "left" }}
+        className="pointer-events-none absolute -bottom-1 left-0 block h-[6px] w-full rounded-full bg-gold/70 blur-[1px]"
+      />
+    </span>
+  );
+}
+
+/* Magnetic hover wrapper — pulls child toward cursor */
+function Magnetic({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 200, damping: 15, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 200, damping: 15, mass: 0.4 });
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={(e) => {
+        const r = ref.current!.getBoundingClientRect();
+        x.set(((e.clientX - r.left) / r.width - 0.5) * 24);
+        y.set(((e.clientY - r.top) / r.height - 0.5) * 16);
+      }}
+      onMouseLeave={() => {
+        x.set(0);
+        y.set(0);
+      }}
+      style={{ x: sx, y: sy }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* Infinite marquee band */
+function Marquee({
+  items,
+  dark = false,
+}: {
+  items: string[];
+  dark?: boolean;
+}) {
+  const row = [...items, ...items, ...items];
+  return (
+    <div
+      className={`relative overflow-hidden border-y ${
+        dark ? "border-cream/15 bg-charcoal text-cream" : "border-border bg-cream text-foreground"
+      } py-8`}
+    >
+      <motion.div
+        animate={{ x: ["0%", "-33.333%"] }}
+        transition={{ duration: 40, ease: "linear", repeat: Infinity }}
+        className="flex whitespace-nowrap"
+      >
+        {row.map((t, i) => (
+          <span key={i} className="mx-10 flex items-center gap-10 font-display text-4xl md:text-6xl">
+            {t}
+            <span className="inline-block h-2 w-2 rotate-45 bg-gold" />
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+/* Cursor-follow "View" tag inside a container */
+function useCursorTag(containerRef: React.RefObject<HTMLElement | null>) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 300, damping: 25 });
+  const sy = useSpring(y, { stiffness: 300, damping: 25 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const move = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect();
+      x.set(e.clientX - r.left);
+      y.set(e.clientY - r.top);
+    };
+    el.addEventListener("mousemove", move);
+    return () => el.removeEventListener("mousemove", move);
+  }, [containerRef, x, y]);
+  return { x: sx, y: sy };
+}
+
+
+
 /* --------------------------------- Hero -------------------------------- */
 function Hero() {
   const ref = useRef<HTMLElement>(null);
