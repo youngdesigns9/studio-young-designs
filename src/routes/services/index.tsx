@@ -1,11 +1,8 @@
-/**
- * Services listing page — /services
- * Shows all 4 services with 3D cards linking to individual pages.
- */
-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/utils/supabase";
 import {
   PageWrapper,
   PageHero,
@@ -30,13 +27,28 @@ export const Route = createFileRoute("/services/")({
   head: () => ({
     meta: [
       { title: "Services — Studio Young Designs" },
-      { name: "description", content: "Explore our bespoke interior design services: Kitchens, Wardrobes, Living Spaces, and Complete Interiors." },
+      {
+        name: "description",
+        content:
+          "Explore our bespoke interior design services: Kitchens, Wardrobes, Living Spaces, and Complete Interiors.",
+      },
+      { property: "og:url", content: "https://studioyoungdesigns.com/services" },
     ],
+    links: [{ rel: "canonical", href: "https://studioyoungdesigns.com/services" }],
   }),
   component: ServicesPage,
 });
 
-const services = [
+interface ServiceItem {
+  num: string;
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+  aspect: "tall" | "short";
+}
+
+const defaultServices: ServiceItem[] = [
   {
     num: "01",
     title: "Kitchens",
@@ -72,16 +84,63 @@ const services = [
 ];
 
 function ServicesPage() {
+  const { data: dbServices = [] } = useQuery<any[]>({
+    queryKey: ["services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: layoutImages = {} } = useQuery<Record<string, string>>({
+    queryKey: ["layout_images"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("layout_images").select("key, image_url");
+      if (error) throw error;
+      return (data || []).reduce((acc, curr) => ({ ...acc, [curr.key]: curr.image_url }), {});
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: siteConfig = {} } = useQuery<Record<string, string>>({
+    queryKey: ["site_config"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("site_config").select("key, value");
+      if (error) throw error;
+      return (data || []).reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const servicesList: ServiceItem[] =
+    dbServices.length > 0
+      ? dbServices
+          .filter((s) => s.is_visible)
+          .map((s, idx) => ({
+            num: `0${idx + 1}`,
+            title: s.title,
+            description: s.short_desc,
+            image: s.image_url,
+            href: `/services/${s.slug}`,
+            aspect: idx === 0 || idx === 3 ? "tall" : "short",
+          }))
+      : defaultServices;
+
   return (
     <PageWrapper>
       <PageHero
-        image={heroImg}
+        image={layoutImages.hero_bg || heroImg}
         title="Our Services"
-        subtitle="Four disciplines. One studio. Forty years of quiet excellence."
-        breadcrumbs={[
-          { label: "Home", to: "/" },
-          { label: "Services" },
-        ]}
+        subtitle={
+          siteConfig.services_subtitle ||
+          "Four disciplines. One studio. Forty years of quiet excellence."
+        }
+        breadcrumbs={[{ label: "Home", to: "/" }, { label: "Services" }]}
       />
 
       {/* Services Grid */}
@@ -111,7 +170,7 @@ function ServicesPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
-            {services.map((svc, i) => (
+            {servicesList.map((svc, i) => (
               <Reveal3D
                 key={svc.title}
                 delay={(i % 2) * 0.12}
@@ -136,7 +195,8 @@ function ServicesPage() {
               className="mx-auto max-w-3xl text-4xl text-cream md:text-6xl"
             />
             <p className="mx-auto mt-8 max-w-lg text-base leading-relaxed text-cream/70">
-              Every project begins with a conversation. Tell us about your space, and we'll take it from there.
+              Every project begins with a conversation. Tell us about your space, and we'll take it
+              from there.
             </p>
             <div className="mt-12">
               <Magnetic>
@@ -147,7 +207,9 @@ function ServicesPage() {
                 >
                   <span className="absolute inset-0 origin-left scale-x-0 bg-gold transition-transform duration-500 ease-out group-hover:scale-x-100" />
                   <span className="relative">Book a Consultation</span>
-                  <span className="relative transition-transform duration-500 group-hover:translate-x-1">→</span>
+                  <span className="relative transition-transform duration-500 group-hover:translate-x-1">
+                    →
+                  </span>
                 </Link>
               </Magnetic>
             </div>
@@ -158,7 +220,7 @@ function ServicesPage() {
   );
 }
 
-function ServiceCard({ service }: { service: (typeof services)[number] }) {
+function ServiceCard({ service }: { service: ServiceItem }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const { x, y } = useCursorTag(ref);
   const [hover, setHover] = useState(false);
@@ -207,7 +269,11 @@ function ServiceCard({ service }: { service: (typeof services)[number] }) {
             </motion.h3>
           </div>
           <p className="mt-3 max-w-sm text-sm text-white/70">{service.description}</p>
-          <motion.span className="mt-4 block h-px bg-gold" initial={{ width: 32 }} whileHover={{ width: 96 }} />
+          <motion.span
+            className="mt-4 block h-px bg-gold"
+            initial={{ width: 32 }}
+            whileHover={{ width: 96 }}
+          />
         </div>
       </Link>
     </TiltCard>

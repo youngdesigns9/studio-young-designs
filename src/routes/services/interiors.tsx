@@ -16,8 +16,14 @@ export const Route = createFileRoute("/services/interiors")({
   head: () => ({
     meta: [
       { title: "Complete Interiors — Studio Young Designs" },
-      { name: "description", content: "End-to-end interior design and execution for residences and commercial spaces. One studio, from first sketch to final handover." },
+      {
+        name: "description",
+        content:
+          "End-to-end interior design and execution for residences and commercial spaces. One studio, from first sketch to final handover.",
+      },
+      { property: "og:url", content: "https://studioyoungdesigns.com/services/interiors" },
     ],
+    links: [{ rel: "canonical", href: "https://studioyoungdesigns.com/services/interiors" }],
   }),
   component: InteriorsPage,
 });
@@ -33,27 +39,33 @@ const data: ServicePageData = {
   features: [
     {
       title: "Space Planning",
-      description: "Detailed floor plans, circulation studies, and 3D walkthroughs — ensuring every room flows naturally before a single wall is built.",
+      description:
+        "Detailed floor plans, circulation studies, and 3D walkthroughs — ensuring every room flows naturally before a single wall is built.",
     },
     {
       title: "Material Selection",
-      description: "Woods, stones, metals, textiles, and finishes — sourced from across India and Italy, chosen by hand in our material library.",
+      description:
+        "Woods, stones, metals, textiles, and finishes — sourced from across India and Italy, chosen by hand in our material library.",
     },
     {
       title: "Project Management",
-      description: "A dedicated project manager, weekly site visits, detailed timelines, and transparent costing — so you never have to wonder what's next.",
+      description:
+        "A dedicated project manager, weekly site visits, detailed timelines, and transparent costing — so you never have to wonder what's next.",
     },
     {
       title: "Turnkey Delivery",
-      description: "From civil works to furniture placement, lighting to landscaping — we hand over a finished space, ready to inhabit.",
+      description:
+        "From civil works to furniture placement, lighting to landscaping — we hand over a finished space, ready to inhabit.",
     },
     {
       title: "Commercial Interiors",
-      description: "Offices, retail spaces, restaurants, and hospitality projects — designed with the same care and craft we bring to homes.",
+      description:
+        "Offices, retail spaces, restaurants, and hospitality projects — designed with the same care and craft we bring to homes.",
     },
     {
       title: "Post-Handover Care",
-      description: "A one-year warranty on all installations, with ongoing maintenance guidance for wood, stone, and metal surfaces.",
+      description:
+        "A one-year warranty on all installations, with ongoing maintenance guidance for wood, stone, and metal surfaces.",
     },
   ],
   gallery: [

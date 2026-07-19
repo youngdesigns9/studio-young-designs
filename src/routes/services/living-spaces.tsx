@@ -16,8 +16,14 @@ export const Route = createFileRoute("/services/living-spaces")({
   head: () => ({
     meta: [
       { title: "Living Spaces — Studio Young Designs" },
-      { name: "description", content: "Living, dining and lounging rooms composed as considered whole environments. Bespoke furniture, lighting and material palettes." },
+      {
+        name: "description",
+        content:
+          "Living, dining and lounging rooms composed as considered whole environments. Bespoke furniture, lighting and material palettes.",
+      },
+      { property: "og:url", content: "https://studioyoungdesigns.com/services/living-spaces" },
     ],
+    links: [{ rel: "canonical", href: "https://studioyoungdesigns.com/services/living-spaces" }],
   }),
   component: LivingSpacesPage,
 });
@@ -33,27 +39,33 @@ const data: ServicePageData = {
   features: [
     {
       title: "Custom Furniture",
-      description: "Sofas, dining tables, consoles and shelving designed and built in-house — matched to the room's material language.",
+      description:
+        "Sofas, dining tables, consoles and shelving designed and built in-house — matched to the room's material language.",
     },
     {
       title: "Lighting Design",
-      description: "Layered schemes with architectural coves, floor lamps, and statement pendants — creating mood from morning to evening.",
+      description:
+        "Layered schemes with architectural coves, floor lamps, and statement pendants — creating mood from morning to evening.",
     },
     {
       title: "Wall Treatments",
-      description: "Hand-plastered textures, timber panelling, natural stone feature walls, and curated paint palettes.",
+      description:
+        "Hand-plastered textures, timber panelling, natural stone feature walls, and curated paint palettes.",
     },
     {
       title: "Entertainment Systems",
-      description: "Hidden media installations, integrated sound systems, and concealed wiring — technology that disappears into the design.",
+      description:
+        "Hidden media installations, integrated sound systems, and concealed wiring — technology that disappears into the design.",
     },
     {
       title: "Art & Object Curation",
-      description: "We work with collectors and galleries to select and place artwork that completes each space.",
+      description:
+        "We work with collectors and galleries to select and place artwork that completes each space.",
     },
     {
       title: "Textile Selection",
-      description: "Curtains, upholstery, rugs, and cushions — chosen for texture, weight, and how they feel against the skin.",
+      description:
+        "Curtains, upholstery, rugs, and cushions — chosen for texture, weight, and how they feel against the skin.",
     },
   ],
   gallery: [

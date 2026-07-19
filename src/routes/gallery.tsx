@@ -6,6 +6,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/utils/supabase";
 import {
   PageWrapper,
   PageHero,
@@ -32,8 +34,14 @@ export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
       { title: "Gallery — Studio Young Designs" },
-      { name: "description", content: "Browse our portfolio of bespoke interiors, modular kitchens, custom wardrobes, and living spaces crafted over 40 years." },
+      {
+        name: "description",
+        content:
+          "Browse our portfolio of bespoke interiors, modular kitchens, custom wardrobes, and living spaces crafted over 40 years.",
+      },
+      { property: "og:url", content: "https://studioyoungdesigns.com/gallery" },
     ],
+    links: [{ rel: "canonical", href: "https://studioyoungdesigns.com/gallery" }],
   }),
   component: GalleryPage,
 });
@@ -45,46 +53,157 @@ interface GalleryItem {
   title: string;
   subtitle: string;
   category: Category;
-  span?: "tall" | "wide";
+  span?: "tall" | "wide" | "standard";
 }
 
-const gallery: GalleryItem[] = [
-  { src: svcKitchen, title: "Walnut Kitchen", subtitle: "Modular · Sadashivanagar", category: "kitchens", span: "wide" },
-  { src: p1, title: "Malabar Residence", subtitle: "Dining · Bangalore", category: "interiors", span: "tall" },
-  { src: svcWardrobe, title: "Cedar Walk-In", subtitle: "Master Wardrobe", category: "wardrobes" },
-  { src: svcLiving, title: "Living Composition", subtitle: "Walnut & Linen", category: "living" },
-  { src: p2, title: "Sadashivanagar House", subtitle: "Master Bedroom", category: "interiors" },
+const defaultGallery: GalleryItem[] = [
+  {
+    src: svcKitchen,
+    title: "Walnut Kitchen",
+    subtitle: "Modular · Sadashivanagar",
+    category: "kitchens",
+    span: "wide",
+  },
+  {
+    src: p1,
+    title: "Malabar Residence",
+    subtitle: "Dining · Bangalore",
+    category: "interiors",
+    span: "tall",
+  },
+  {
+    src: svcWardrobe,
+    title: "Cedar Walk-In",
+    subtitle: "Master Wardrobe",
+    category: "wardrobes",
+    span: "standard",
+  },
+  {
+    src: svcLiving,
+    title: "Living Composition",
+    subtitle: "Walnut & Linen",
+    category: "living",
+    span: "standard",
+  },
+  {
+    src: p2,
+    title: "Sadashivanagar House",
+    subtitle: "Master Bedroom",
+    category: "interiors",
+    span: "standard",
+  },
   { src: p3, title: "Cubbon Study", subtitle: "Home Library", category: "living", span: "tall" },
-  { src: svcComplete, title: "Turnkey Villa", subtitle: "Complete Interior", category: "interiors", span: "wide" },
-  { src: p4, title: "Whitefield Villa", subtitle: "Marble & Walnut Bath", category: "interiors" },
-  { src: aboutImg, title: "Craftsman at Work", subtitle: "In-House Atelier", category: "interiors" },
-  { src: heroImg, title: "Design Process", subtitle: "Material Selection", category: "living" },
-];
-
-const categories: Array<{ key: Category; label: string }> = [
-  { key: "all", label: "All Projects" },
-  { key: "kitchens", label: "Kitchens" },
-  { key: "wardrobes", label: "Wardrobes" },
-  { key: "living", label: "Living Spaces" },
-  { key: "interiors", label: "Interiors" },
+  {
+    src: svcComplete,
+    title: "Turnkey Villa",
+    subtitle: "Complete Interior",
+    category: "interiors",
+    span: "wide",
+  },
+  {
+    src: p4,
+    title: "Whitefield Villa",
+    subtitle: "Marble & Walnut Bath",
+    category: "interiors",
+    span: "standard",
+  },
+  {
+    src: aboutImg,
+    title: "Craftsman at Work",
+    subtitle: "In-House Atelier",
+    category: "interiors",
+    span: "standard",
+  },
+  {
+    src: heroImg,
+    title: "Design Process",
+    subtitle: "Material Selection",
+    category: "living",
+    span: "standard",
+  },
 ];
 
 function GalleryPage() {
-  const [filter, setFilter] = useState<Category>("all");
-  const [selected, setSelected] = useState<GalleryItem | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+  const [selected, setSelected] = useState<any | null>(null);
 
-  const filtered = filter === "all" ? gallery : gallery.filter((g) => g.category === filter);
+  const { data: items = [] } = useQuery<any[]>({
+    queryKey: ["gallery"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: dbServices = [] } = useQuery<any[]>({
+    queryKey: ["services_active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("slug, title")
+        .eq("is_visible", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: layoutImages = {} } = useQuery<Record<string, string>>({
+    queryKey: ["layout_images"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("layout_images").select("key, image_url");
+      if (error) throw error;
+      return (data || []).reduce((acc, curr) => ({ ...acc, [curr.key]: curr.image_url }), {});
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const categoriesList =
+    dbServices.length > 0
+      ? [
+          { key: "all", label: "All Projects" },
+          ...dbServices.map((s) => ({
+            key: s.slug,
+            label: s.title,
+          })),
+        ]
+      : [
+          { key: "all", label: "All Projects" },
+          { key: "kitchens", label: "Kitchens" },
+          { key: "wardrobes", label: "Wardrobes" },
+          { key: "living", label: "Living Spaces" },
+          { key: "interiors", label: "Interiors" },
+        ];
+
+  const galleryList =
+    items.length > 0
+      ? items
+          .filter((i) => i.is_visible)
+          .map((i) => ({
+            src: i.image_url,
+            title: i.title,
+            subtitle: i.subtitle,
+            category: i.category,
+            span: i.span === "wide" || i.span === "tall" ? i.span : "standard",
+          }))
+      : defaultGallery;
+
+  const filtered =
+    filter === "all" ? galleryList : galleryList.filter((g) => g.category === filter);
 
   return (
     <PageWrapper>
       <PageHero
-        image={heroImg}
+        image={layoutImages.hero_bg || heroImg}
         title="Gallery"
         subtitle="Seven hundred spaces. A small selection of the ones that stayed with us."
-        breadcrumbs={[
-          { label: "Home", to: "/" },
-          { label: "Gallery" },
-        ]}
+        breadcrumbs={[{ label: "Home", to: "/" }, { label: "Gallery" }]}
       />
 
       <section className="bg-cream py-24 md:py-32">
@@ -99,14 +218,17 @@ function GalleryPage() {
                     <TextScramble text="Selected Work" />
                   </span>
                 </div>
-                <SplitHeading text="Our portfolio of considered spaces." className="text-4xl md:text-5xl" />
+                <SplitHeading
+                  text="Our portfolio of considered spaces."
+                  className="text-4xl md:text-5xl"
+                />
               </Reveal3D>
             </div>
 
             {/* Category filter tabs */}
             <Reveal3D delay={0.2} rotateX={6}>
               <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
+                {categoriesList.map((cat) => (
                   <motion.button
                     key={cat.key}
                     onClick={() => setFilter(cat.key)}

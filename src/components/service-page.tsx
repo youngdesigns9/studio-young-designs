@@ -6,6 +6,8 @@
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/utils/supabase";
 import {
   PageWrapper,
   PageHero,
@@ -44,16 +46,71 @@ export interface ServicePageData {
 }
 
 export function ServicePageLayout({ data }: { data: ServicePageData }) {
+  const { data: dbService } = useQuery<any>({
+    queryKey: ["service_detail", data.slug],
+    queryFn: async () => {
+      const { data: res, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("slug", data.slug)
+        .single();
+      if (error) throw error;
+      return res;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: dbGallery = [] } = useQuery<any[]>({
+    queryKey: ["service_gallery", data.slug],
+    queryFn: async () => {
+      const { data: res, error } = await supabase
+        .from("gallery")
+        .select("*")
+        .eq("category", data.slug)
+        .eq("is_visible", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return res || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const mergedData: ServicePageData = {
+    ...data,
+    title: dbService?.title || data.title,
+    subtitle: dbService?.short_desc || data.subtitle,
+    heroImage: dbService?.image_url || data.heroImage,
+    description: dbService?.description || data.description,
+    features:
+      dbService?.features && dbService.features.length > 0
+        ? dbService.features.map((f: string, idx: number) => ({
+            title: f.split(":")[0] || `Specification ${idx + 1}`,
+            description: f.split(":")[1] || f,
+          }))
+        : data.features,
+    gallery:
+      dbGallery.length > 0
+        ? dbGallery.map((g: any) => ({
+            src: g.image_url,
+            alt: g.title || "Gallery Image",
+            title: g.title || g.subtitle || "",
+            span: g.span === "wide" || g.span === "tall" ? g.span : "normal",
+          }))
+        : data.gallery,
+    marqueeItems:
+      dbService?.benefits && dbService.benefits.length > 0 ? dbService.benefits : data.marqueeItems,
+  };
+
   return (
     <PageWrapper>
       <PageHero
-        image={data.heroImage}
-        title={data.title}
-        subtitle={data.subtitle}
+        image={mergedData.heroImage}
+        title={mergedData.title}
+        subtitle={mergedData.subtitle}
         breadcrumbs={[
           { label: "Home", to: "/" },
           { label: "Services", to: "/services" },
-          { label: data.title },
+          { label: mergedData.title },
         ]}
       />
 
@@ -69,13 +126,13 @@ export function ServicePageLayout({ data }: { data: ServicePageData }) {
                     <TextScramble text="Overview" />
                   </span>
                 </div>
-                <SplitHeading text={data.intro} className="text-3xl md:text-5xl" />
+                <SplitHeading text={mergedData.intro} className="text-3xl md:text-5xl" />
               </Reveal3D>
             </div>
             <div className="md:col-span-6 md:col-start-7">
               <Reveal3D delay={0.2} rotateX={8}>
                 <p className="text-lg leading-relaxed text-foreground/70">
-                  {data.description}
+                  {mergedData.description}
                 </p>
               </Reveal3D>
             </div>
@@ -95,8 +152,13 @@ export function ServicePageLayout({ data }: { data: ServicePageData }) {
             </div>
           </Reveal3D>
           <div className="grid grid-cols-1 gap-px bg-border/60 border border-border/60 md:grid-cols-2">
-            {data.features.map((feat, i) => (
-              <Reveal3D key={feat.title} delay={i * 0.1} rotateX={10} rotateY={(i % 2 === 0 ? 1 : -1) * 5}>
+            {mergedData.features.map((feat, i) => (
+              <Reveal3D
+                key={feat.title}
+                delay={i * 0.1}
+                rotateX={10}
+                rotateY={(i % 2 === 0 ? 1 : -1) * 5}
+              >
                 <TiltCard intensity={6}>
                   <div className="group flex h-full flex-col bg-background p-8 transition-colors duration-500 hover:bg-cream md:p-12">
                     <div className="flex items-center justify-between">
@@ -120,10 +182,10 @@ export function ServicePageLayout({ data }: { data: ServicePageData }) {
       </section>
 
       {/* Marquee */}
-      <Marquee items={data.marqueeItems} dark />
+      <Marquee items={mergedData.marqueeItems} dark />
 
       {/* Gallery */}
-      <ServiceGallery images={data.gallery} />
+      <ServiceGallery images={mergedData.gallery} />
 
       {/* CTA */}
       <section className="bg-charcoal py-24 text-cream md:py-32">
@@ -134,7 +196,8 @@ export function ServicePageLayout({ data }: { data: ServicePageData }) {
               className="mx-auto max-w-3xl text-4xl text-cream md:text-6xl"
             />
             <p className="mx-auto mt-8 max-w-lg text-base leading-relaxed text-cream/70">
-              Tell us about your space. We'll arrange a quiet visit to your home or our Bangalore studio.
+              Tell us about your space. We'll arrange a quiet visit to your home or our Bangalore
+              studio.
             </p>
             <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
               <Magnetic>
@@ -145,7 +208,9 @@ export function ServicePageLayout({ data }: { data: ServicePageData }) {
                 >
                   <span className="absolute inset-0 origin-left scale-x-0 bg-gold transition-transform duration-500 ease-out group-hover:scale-x-100" />
                   <span className="relative">Get in Touch</span>
-                  <span className="relative transition-transform duration-500 group-hover:translate-x-1">→</span>
+                  <span className="relative transition-transform duration-500 group-hover:translate-x-1">
+                    →
+                  </span>
                 </Link>
               </Magnetic>
               <Magnetic>

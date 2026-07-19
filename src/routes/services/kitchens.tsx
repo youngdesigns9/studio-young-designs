@@ -16,8 +16,14 @@ export const Route = createFileRoute("/services/kitchens")({
   head: () => ({
     meta: [
       { title: "Modular Kitchens — Studio Young Designs" },
-      { name: "description", content: "Custom modular kitchens built around the way your family cooks and gathers. Premium materials, master craftsmanship." },
+      {
+        name: "description",
+        content:
+          "Custom modular kitchens built around the way your family cooks and gathers. Premium materials, master craftsmanship.",
+      },
+      { property: "og:url", content: "https://studioyoungdesigns.com/services/kitchens" },
     ],
+    links: [{ rel: "canonical", href: "https://studioyoungdesigns.com/services/kitchens" }],
   }),
   component: KitchensPage,
 });
@@ -33,27 +39,33 @@ const data: ServicePageData = {
   features: [
     {
       title: "Custom Cabinetry",
-      description: "Handcrafted cabinets in walnut, oak and lacquer finishes — built to your exact specifications with soft-close hinges and premium internals.",
+      description:
+        "Handcrafted cabinets in walnut, oak and lacquer finishes — built to your exact specifications with soft-close hinges and premium internals.",
     },
     {
       title: "Stone Countertops",
-      description: "Italian marble, Brazilian quartzite, and locally sourced granite — each slab hand-selected for grain and character.",
+      description:
+        "Italian marble, Brazilian quartzite, and locally sourced granite — each slab hand-selected for grain and character.",
     },
     {
       title: "Integrated Appliances",
-      description: "Seamless integration of premium appliances from Miele, Gaggenau, and Bosch — hidden behind cabinetry for a clean, unified aesthetic.",
+      description:
+        "Seamless integration of premium appliances from Miele, Gaggenau, and Bosch — hidden behind cabinetry for a clean, unified aesthetic.",
     },
     {
       title: "Smart Storage",
-      description: "Corner carousels, pull-out pantries, drawer organisers, and custom spice racks — every centimetre of space made purposeful.",
+      description:
+        "Corner carousels, pull-out pantries, drawer organisers, and custom spice racks — every centimetre of space made purposeful.",
     },
     {
       title: "Island & Breakfast Bars",
-      description: "Statement islands in bookmatched stone with waterfall edges, designed for cooking, dining, and conversation.",
+      description:
+        "Statement islands in bookmatched stone with waterfall edges, designed for cooking, dining, and conversation.",
     },
     {
       title: "Lighting Design",
-      description: "Layered lighting with under-cabinet LEDs, pendant features, and dimmable ambiance — tuned to the time of day.",
+      description:
+        "Layered lighting with under-cabinet LEDs, pendant features, and dimmable ambiance — tuned to the time of day.",
     },
   ],
   gallery: [

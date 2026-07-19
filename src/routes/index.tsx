@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   motion,
   useScroll,
@@ -10,6 +10,10 @@ import {
   animate,
   AnimatePresence,
 } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/utils/supabase";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 import {
   PageWrapper,
@@ -40,9 +44,7 @@ import p4 from "@/assets/portfolio-4.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [
-      { property: "og:image", content: "https://project--fbde5fc0-763d-412b-8186-8a95d993998e.lovable.app/og.jpg" },
-    ],
+    meta: [{ property: "og:image", content: "https://studioyoungdesigns.com/og.jpg" }],
   }),
   component: Home,
 });
@@ -138,7 +140,13 @@ function Loader() {
    HERO — Multi-depth parallax, particles, 3D text entry
    ═══════════════════════════════════════════════════════════════ */
 
-function Hero() {
+function Hero({
+  config = {},
+  images = {},
+}: {
+  config?: Record<string, string>;
+  images?: Record<string, string>;
+}) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "22%"]);
@@ -147,17 +155,50 @@ function Hero() {
   const badgeY = useTransform(scrollYProgress, [0, 1], ["0%", "-40%"]);
   const textZ = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
+  // Extract all hero slides dynamically
+  const heroSlidesList: string[] = useMemo(() => {
+    const keys = Object.keys(images)
+      .filter((k) => k.startsWith("hero_slide_"))
+      .sort((a, b) => {
+        const numA = parseInt(a.replace("hero_slide_", ""), 10);
+        const numB = parseInt(b.replace("hero_slide_", ""), 10);
+        return numA - numB;
+      });
+
+    const urls = keys.map((k) => images[k]).filter(Boolean);
+    if (urls.length > 0) return urls;
+    if (images.hero_bg) return [images.hero_bg];
+    return [heroImg];
+  }, [images]);
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (heroSlidesList.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlidesList.length);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [heroSlidesList.length]);
+
   return (
     <section id="top" ref={ref} className="relative h-[100svh] w-full overflow-hidden bg-charcoal">
-      {/* Background image — deepest layer */}
+      {/* Background image slideshow — deepest layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0">
-        <img
-          src={heroImg}
-          alt="Luxury modern living room with walnut wood, warm natural light"
-          className="h-full w-full object-cover"
-          width={1920}
-          height={1280}
-        />
+        <AnimatePresence mode="popLayout">
+          <motion.img
+            key={heroSlidesList[currentSlide] || currentSlide}
+            src={heroSlidesList[currentSlide]}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            alt="Luxury modern interior design"
+            className="absolute inset-0 h-full w-full object-cover"
+            width={1920}
+            height={1280}
+          />
+        </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-black/70" />
       </motion.div>
 
@@ -171,11 +212,12 @@ function Hero() {
       >
         <motion.div
           initial={{ opacity: 0, y: 60, scale: 0.9 }}
-          animate={{ opacity: 0.50, y: 0, scale: 1 }}
+          animate={{ opacity: 0.5, y: 0, scale: 1 }}
           transition={{ duration: 1.6, delay: 0.4, ease: EASE_SMOOTH }}
           className="font-display text-[28vw] leading-none text-white md:text-[18vw]"
         >
-          40<span className="text-gold">+</span>
+          {config.stat_years ? config.stat_years.replace(/\D/g, "") : "40"}
+          <span className="text-gold">+</span>
         </motion.div>
       </motion.div>
 
@@ -203,45 +245,28 @@ function Hero() {
           </motion.div>
 
           {/* 3D Title — each word enters from rotateX with blur */}
-          <h1 className="font-display leading-[1.02] tracking-tight text-white text-[13vw] sm:text-6xl md:text-7xl lg:text-[5.5rem]">
-            {["Crafting", "Timeless", "Interiors"].map((w, i) => (
-              <span key={i} className="inline-block overflow-hidden pb-2 pr-[0.28em] align-bottom">
-                <motion.span
-                  className="inline-block"
-                  initial={{ y: "110%", rotateX: 60, opacity: 0, filter: "blur(8px)" }}
-                  animate={{ y: "0%", rotateX: 0, opacity: 1, filter: "blur(0px)" }}
-                  transition={{ duration: 1.2, delay: 0.3 + i * 0.1, ease: EASE_SMOOTH }}
-                  style={{ transformOrigin: "bottom center" }}
-                >
-                  {w}
-                </motion.span>
-              </span>
-            ))}
-            <br />
-            {["for", "Over"].map((w, i) => (
-              <span key={i} className="inline-block overflow-hidden pb-2 pr-[0.28em] align-bottom">
-                <motion.span
-                  className="inline-block"
-                  initial={{ y: "110%", rotateX: 60, opacity: 0, filter: "blur(8px)" }}
-                  animate={{ y: "0%", rotateX: 0, opacity: 1, filter: "blur(0px)" }}
-                  transition={{ duration: 1.2, delay: 0.7 + i * 0.1, ease: EASE_SMOOTH }}
-                  style={{ transformOrigin: "bottom center" }}
-                >
-                  {w}
-                </motion.span>
-              </span>
-            ))}
-            <span className="inline-block overflow-hidden pb-2 pr-[0.28em] align-bottom">
-              <motion.span
-                className="inline-block"
-                initial={{ y: "110%", rotateX: 60, opacity: 0, filter: "blur(8px)" }}
-                animate={{ y: "0%", rotateX: 0, opacity: 1, filter: "blur(0px)" }}
-                transition={{ duration: 1.2, delay: 0.95, ease: EASE_SMOOTH }}
-                style={{ transformOrigin: "bottom center" }}
-              >
-                <Highlight dark>40+ Years.</Highlight>
-              </motion.span>
-            </span>
+          <h1 className="font-display leading-[1.02] tracking-tight text-white text-[10vw] sm:text-6xl md:text-7xl lg:text-[5.5rem] flex flex-wrap gap-x-[0.28em] gap-y-2">
+            {(config.hero_title || "Bespoke spaces, crafted over forty years.")
+              .split(" ")
+              .map((w, i) => {
+                const isHighlight =
+                  w.toLowerCase().includes("forty") ||
+                  w.includes("40") ||
+                  w.toLowerCase().includes("years");
+                return (
+                  <span key={i} className="inline-block overflow-hidden pb-2 align-bottom">
+                    <motion.span
+                      className="inline-block"
+                      initial={{ y: "110%", rotateX: 60, opacity: 0, filter: "blur(8px)" }}
+                      animate={{ y: "0%", rotateX: 0, opacity: 1, filter: "blur(0px)" }}
+                      transition={{ duration: 1.2, delay: 0.3 + i * 0.08, ease: EASE_SMOOTH }}
+                      style={{ transformOrigin: "bottom center" }}
+                    >
+                      {isHighlight ? <Highlight dark>{w}</Highlight> : w}
+                    </motion.span>
+                  </span>
+                );
+              })}
           </h1>
 
           <motion.p
@@ -250,8 +275,8 @@ function Hero() {
             transition={{ duration: 1, delay: 1.2 }}
             className="mt-8 max-w-xl text-base leading-relaxed text-white/80 md:text-lg"
           >
-            For over four decades, Studio Young Designs has transformed homes and commercial spaces
-            through timeless design, premium craftsmanship, and bespoke interiors.
+            {config.hero_subtitle ||
+              "For over four decades, Studio Young Designs has transformed homes and commercial spaces through timeless design, premium craftsmanship, and bespoke interiors."}
           </motion.p>
 
           <motion.div
@@ -293,6 +318,22 @@ function Hero() {
 
         {/* Absolutely positioned bottom row */}
         <div className="absolute bottom-8 left-6 right-6 flex items-end justify-between text-white/75 md:left-14 md:right-14 md:bottom-12 pointer-events-none">
+          {heroSlidesList.length > 1 ? (
+            <div className="flex items-center gap-2 pointer-events-auto">
+              {heroSlidesList.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  aria-label={`Go to slide ${idx + 1}`}
+                  className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                    currentSlide === idx ? "w-8 bg-gold" : "w-2 bg-white/40 hover:bg-white/70"
+                  }`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div />
+          )}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -327,7 +368,13 @@ function Hero() {
    ABOUT — Mask-wipe image reveal + 3D milestone entry
    ═══════════════════════════════════════════════════════════════ */
 
-function About() {
+function About({
+  config = {},
+  images = {},
+}: {
+  config?: Record<string, string>;
+  images?: Record<string, string>;
+}) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const imgY = useTransform(scrollYProgress, [0, 1], ["-8%", "12%"]);
@@ -338,7 +385,10 @@ function About() {
     ["1981", "Studio founded in Bangalore, rooted in bespoke woodwork."],
     ["1998", "Expansion into complete residential interior design."],
     ["2010", "Custom modular kitchens & wardrobes atelier established."],
-    ["2024", "700+ homes and spaces delivered across South India."],
+    [
+      config.stat_years ? config.stat_years.replace(/\D/g, "") : "2024",
+      `${config.stat_spaces || "700+"} homes and spaces delivered across South India.`,
+    ],
   ];
 
   return (
@@ -366,7 +416,7 @@ function About() {
               />
               <motion.img
                 style={{ y: imgY }}
-                src={aboutImg}
+                src={images.about_img || aboutImg}
                 alt="Craftsman hands finishing a walnut furniture piece"
                 loading="lazy"
                 width={1400}
@@ -387,16 +437,17 @@ function About() {
 
         <div className="md:col-span-7 md:pl-8">
           <SplitHeading
-            text="Four decades. One quiet obsession — space that lasts."
+            text={config.about_heading || "Four decades. One quiet obsession — space that lasts."}
             className="text-4xl md:text-6xl"
           />
           <Reveal3D delay={0.2} rotateX={8}>
-            <p className="mt-10 max-w-xl text-lg leading-relaxed text-foreground/75">
-              Studio Young Designs began in 1981 as a small atelier in Bangalore, drawing on the
-              region's tradition of fine joinery. Today, we design and build complete interiors —
-              from the residence's first sketch to the last brass detail — for families who value
-              restraint, honest materials and craftsmanship that ages beautifully.
-            </p>
+            <div className="mt-10 max-w-xl text-lg leading-relaxed text-foreground/75 space-y-4">
+              <p>
+                {config.about_desc_1 ||
+                  "Studio Young Designs began in 1981 as a small atelier in Bangalore, drawing on the region's tradition of fine joinery. Today, we design and build complete interiors — from the residence's first sketch to the last brass detail — for families who value restraint, honest materials and craftsmanship that ages beautifully."}
+              </p>
+              {config.about_desc_2 && <p>{config.about_desc_2}</p>}
+            </div>
           </Reveal3D>
 
           <div className="mt-16">
@@ -407,12 +458,14 @@ function About() {
                   <div className="grid grid-cols-[minmax(0,110px)_1fr] items-baseline gap-6 md:grid-cols-[minmax(0,140px)_1fr]">
                     <motion.div
                       className="font-display text-3xl text-walnut md:text-4xl"
-                      whileHover={{ scale: 1.05, color: "oklch(0.72 0.09 78)" }}
+                      whileHover={{ scale: 1.05, color: "#cb2026" }}
                       transition={{ type: "spring", stiffness: 300 }}
                     >
                       {year}
                     </motion.div>
-                    <div className="text-sm leading-relaxed text-foreground/70 md:text-base">{text}</div>
+                    <div className="text-sm leading-relaxed text-foreground/70 md:text-base">
+                      {text}
+                    </div>
                   </div>
                   <div className="hairline mt-6" />
                 </Reveal3D>
@@ -429,15 +482,29 @@ function About() {
    WHY CHOOSE US — TiltCards with dynamic lighting
    ═══════════════════════════════════════════════════════════════ */
 
-function Why() {
-  const items = [
+function Why({ config = {}, items = [] }: { config?: Record<string, string>; items?: any[] }) {
+  const defaultItems = [
     { t: "40+ Years Experience", d: "A four-decade practice, refined project by project." },
     { t: "Bespoke Designs", d: "Every space drawn from the ground up around how you live." },
-    { t: "Premium Materials", d: "Walnut, oak, natural stone, brass — sourced without compromise." },
+    {
+      t: "Premium Materials",
+      d: "Walnut, oak, natural stone, brass — sourced without compromise.",
+    },
     { t: "Turnkey Execution", d: "One studio, from first sketch to final handover." },
     { t: "Expert Craftsmanship", d: "In-house atelier with master carpenters and finishers." },
     { t: "Personalized Design Process", d: "A slow, considered dialogue with each client." },
   ];
+
+  const displayItems =
+    items.length > 0
+      ? items
+          .filter((it) => it.is_visible)
+          .map((it) => ({
+            t: it.title,
+            d: it.description,
+          }))
+      : defaultItems;
+
   return (
     <section className="relative bg-background py-32 md:py-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
@@ -451,19 +518,22 @@ function Why() {
                 </span>
               </div>
             </Reveal3D>
-            <SplitHeading text="Considered work, without compromise." className="text-4xl md:text-5xl" />
+            <SplitHeading
+              text={config.why_heading || "Considered work, without compromise."}
+              className="text-4xl md:text-5xl"
+            />
           </div>
           <Reveal3D delay={0.2} rotateX={6} className="md:col-span-5 md:col-start-8">
             <p className="text-base leading-relaxed text-foreground/70">
-              We are a small studio by choice. It lets us stay close to the drawing, to the wood, to
-              the client — and to the standards we set ourselves in 1981.
+              {config.why_subtitle ||
+                "We are a small studio by choice. It lets us stay close to the drawing, to the wood, to the client — and to the standards we set ourselves in 1981."}
             </p>
           </Reveal3D>
         </div>
 
         <div className="grid grid-cols-1 border-l border-t border-border/60 md:grid-cols-3">
-          {items.map((it, i) => (
-            <Reveal3D key={it.t} delay={(i % 3) * 0.1} rotateX={12} rotateY={(i % 3 - 1) * 6}>
+          {displayItems.map((it, i) => (
+            <Reveal3D key={it.t} delay={(i % 3) * 0.1} rotateX={12} rotateY={((i % 3) - 1) * 6}>
               <TiltCard intensity={8}>
                 <div className="group relative flex h-full flex-col justify-between border-b border-r border-border/60 p-8 transition-colors duration-500 hover:bg-cream md:p-10">
                   <div className="flex items-center justify-between">
@@ -493,8 +563,14 @@ function Why() {
    SERVICES — Diagonal Wipe + 3D Perspective Tilt
    ═══════════════════════════════════════════════════════════════ */
 
-function Services() {
-  const items = [
+function Services({
+  services = [],
+  config = {},
+}: {
+  services?: any[];
+  config?: Record<string, string>;
+}) {
+  const defaultItems = [
     {
       k: "01",
       t: "Kitchens",
@@ -524,6 +600,20 @@ function Services() {
       href: "/services/interiors",
     },
   ];
+
+  const items =
+    services.length > 0
+      ? services
+          .filter((s) => s.is_visible)
+          .map((s, idx) => ({
+            k: `0${idx + 1}`,
+            t: s.title,
+            d: s.short_desc,
+            img: s.image_url,
+            href: `/services/${s.slug}`,
+          }))
+      : defaultItems;
+
   return (
     <section id="services" className="relative bg-charcoal py-32 text-cream md:py-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
@@ -537,7 +627,10 @@ function Services() {
                 </span>
               </div>
             </Reveal3D>
-            <SplitHeading text="Four disciplines. One studio." className="text-4xl text-cream md:text-6xl" />
+            <SplitHeading
+              text={config.services_heading || "Four disciplines. One studio."}
+              className="text-4xl text-cream md:text-6xl"
+            />
           </div>
         </div>
 
@@ -616,7 +709,11 @@ function ServiceRow({
           </motion.div>
           <h3 className="mt-6 font-display text-4xl md:text-5xl">{item.t}</h3>
           <p className="mt-6 max-w-md text-base leading-relaxed text-cream/70">{item.d}</p>
-          <motion.div whileHover={{ x: 8 }} transition={{ type: "spring", stiffness: 300 }} className="mt-10">
+          <motion.div
+            whileHover={{ x: 8 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="mt-10"
+          >
             <Link
               to={item.href}
               className="inline-flex items-center gap-3 border-b border-cream/40 pb-2 text-[11px] uppercase tracking-[0.28em] text-cream transition-colors hover:border-gold hover:text-gold"
@@ -654,7 +751,10 @@ function Portfolio() {
                 </span>
               </div>
             </Reveal3D>
-            <SplitHeading text="A quiet portfolio of considered homes." className="text-4xl md:text-6xl" />
+            <SplitHeading
+              text="A quiet portfolio of considered homes."
+              className="text-4xl md:text-6xl"
+            />
           </div>
           <Reveal3D className="max-w-sm" rotateX={6}>
             <p className="text-sm leading-relaxed text-foreground/65">
@@ -666,7 +766,12 @@ function Portfolio() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {pieces.map((p, i) => (
-            <Reveal3D key={p.title} delay={(i % 2) * 0.1} rotateX={12} rotateY={(i % 2 === 0 ? 1 : -1) * 6}>
+            <Reveal3D
+              key={p.title}
+              delay={(i % 2) * 0.1}
+              rotateX={12}
+              rotateY={(i % 2 === 0 ? 1 : -1) * 6}
+            >
               <PortfolioCard piece={p} />
             </Reveal3D>
           ))}
@@ -777,7 +882,10 @@ function Process() {
               </span>
             </div>
           </Reveal3D>
-          <SplitHeading text="Six steps. One considered journey." className="text-4xl md:text-6xl" />
+          <SplitHeading
+            text="Six steps. One considered journey."
+            className="text-4xl md:text-6xl"
+          />
         </div>
 
         <div className="relative">
@@ -804,7 +912,10 @@ function Process() {
                   >
                     <motion.span
                       className="flex h-8 w-8 items-center justify-center rounded-full border border-gold bg-cream font-display text-sm leading-none text-walnut"
-                      whileInView={{ scale: [0.5, 1.2, 1], borderColor: ["oklch(0.9 0.01 70)", "oklch(0.72 0.09 78)"] }}
+                      whileInView={{
+                        scale: [0.5, 1.2, 1],
+                        borderColor: ["oklch(0.9 0.01 70)", "oklch(0.72 0.09 78)"],
+                      }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.8, delay: i * 0.1 }}
                     >
@@ -860,11 +971,20 @@ function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
   );
 }
 
-function Counters() {
-  const stats: Array<{ n: number; s: string; label: string } | { text: string; label: string }> = [
-    { n: 40, s: "+", label: "Years of Experience" },
-    { n: 700, s: "+", label: "Projects Completed" },
-    { n: 100, s: "%", label: "Custom Designs" },
+function Counters({ config = {} }: { config?: Record<string, string> }) {
+  const yearsNum = config.stat_years ? parseInt(config.stat_years.replace(/\D/g, "")) : 40;
+  const yearsSuffix = config.stat_years ? config.stat_years.replace(/\d/g, "") : "+";
+
+  const spacesNum = config.stat_spaces ? parseInt(config.stat_spaces.replace(/\D/g, "")) : 700;
+  const spacesSuffix = config.stat_spaces ? config.stat_spaces.replace(/\d/g, "") : "+";
+
+  const artisansNum = config.stat_artisans ? parseInt(config.stat_artisans.replace(/\D/g, "")) : 35;
+  const artisansSuffix = config.stat_artisans ? config.stat_artisans.replace(/\d/g, "") : "+";
+
+  const stats = [
+    { n: yearsNum, s: yearsSuffix, label: config.stat_years_label || "Years of Experience" },
+    { n: spacesNum, s: spacesSuffix, label: config.stat_spaces_label || "Projects Completed" },
+    { n: artisansNum, s: artisansSuffix, label: config.stat_artisans_label || "Master Craftsmen" },
     { text: "Premium", label: "Quality Materials" },
   ];
   return (
@@ -889,9 +1009,15 @@ function Counters() {
             <Reveal3D key={i} delay={i * 0.12} rotateX={15} rotateY={(i - 1.5) * 5}>
               <div className="pt-10">
                 <div className="font-display text-6xl leading-none md:text-7xl">
-                  {"n" in st ? <CountUp to={st.n} suffix={st.s} /> : st.text}
+                  {"n" in st && typeof st.n === "number" ? (
+                    <CountUp to={st.n} suffix={st.s} />
+                  ) : (
+                    st.text
+                  )}
                 </div>
-                <div className="mt-6 text-xs uppercase tracking-[0.28em] text-cream/60">{st.label}</div>
+                <div className="mt-6 text-xs uppercase tracking-[0.28em] text-cream/60">
+                  {st.label}
+                </div>
               </div>
             </Reveal3D>
           ))}
@@ -905,8 +1031,8 @@ function Counters() {
    TESTIMONIALS — 3D Depth Carousel
    ═══════════════════════════════════════════════════════════════ */
 
-function Testimonials() {
-  const items = [
+function Testimonials({ testimonials = [] }: { testimonials?: any[] }) {
+  const defaultItems = [
     {
       q: "They understood our home before we did. Four decades of intuition — it shows in every joint.",
       n: "Ananya & Rohan Mehta",
@@ -923,6 +1049,17 @@ function Testimonials() {
       p: "Indiranagar Apartment",
     },
   ];
+
+  const items =
+    testimonials.length > 0
+      ? testimonials
+          .filter((t) => t.is_approved)
+          .map((t) => ({
+            q: t.content,
+            n: t.customer_name,
+            p: t.company_name || "Client",
+          }))
+      : defaultItems;
 
   const [active, setActive] = useState(0);
   const [isMobile, setIsMobile] = useState(true);
@@ -952,11 +1089,17 @@ function Testimonials() {
               </span>
             </div>
           </Reveal3D>
-          <SplitHeading text="From the families we've built for." className="text-4xl md:text-6xl" />
+          <SplitHeading
+            text="From the families we've built for."
+            className="text-4xl md:text-6xl"
+          />
         </div>
 
         <div className="relative" style={{ perspective: "1000px" }}>
-          <div className="flex flex-col gap-6 md:flex-row md:gap-0 md:justify-center md:items-center" style={{ minHeight: isMobile ? "auto" : 320 }}>
+          <div
+            className="flex flex-col gap-6 md:flex-row md:gap-0 md:justify-center md:items-center"
+            style={{ minHeight: isMobile ? "auto" : 320 }}
+          >
             {items.map((t, i) => {
               const offset = i - active;
               const isActive = i === active;
@@ -964,19 +1107,23 @@ function Testimonials() {
                 <motion.figure
                   key={t.n}
                   onClick={() => !isMobile && setActive(i)}
-                  animate={isMobile ? {
-                    z: 0,
-                    x: "0%",
-                    scale: 1,
-                    opacity: 1,
-                    rotateY: 0,
-                  } : {
-                    z: isActive ? 50 : -100,
-                    x: `${offset * 105}%`,
-                    scale: isActive ? 1 : 0.85,
-                    opacity: isActive ? 1 : 0.4,
-                    rotateY: offset * -10,
-                  }}
+                  animate={
+                    isMobile
+                      ? {
+                          z: 0,
+                          x: "0%",
+                          scale: 1,
+                          opacity: 1,
+                          rotateY: 0,
+                        }
+                      : {
+                          z: isActive ? 50 : -100,
+                          x: `${offset * 105}%`,
+                          scale: isActive ? 1 : 0.85,
+                          opacity: isActive ? 1 : 0.4,
+                          rotateY: offset * -10,
+                        }
+                  }
                   transition={{ duration: 0.8, ease: EASE_SMOOTH }}
                   className={`flex-shrink-0 w-full md:w-[420px] md:absolute md:left-1/2 md:-translate-x-1/2 flex flex-col justify-between border-t border-border pt-8 p-8 ${
                     isActive && !isMobile ? "shadow-2xl bg-cream" : "bg-background"
@@ -1004,7 +1151,10 @@ function Testimonials() {
                   key={i}
                   onClick={() => setActive(i)}
                   className="relative h-2 rounded-full bg-border"
-                  animate={{ width: i === active ? 32 : 8, backgroundColor: i === active ? "var(--gold)" : undefined }}
+                  animate={{
+                    width: i === active ? 32 : 8,
+                    backgroundColor: i === active ? "var(--gold)" : undefined,
+                  }}
                   transition={{ duration: 0.4 }}
                 />
               ))}
@@ -1020,8 +1170,55 @@ function Testimonials() {
    CONTACT — Enhanced form field animations
    ═══════════════════════════════════════════════════════════════ */
 
-function Contact() {
+function Contact({
+  config = {},
+  services = [],
+}: {
+  config?: Record<string, string>;
+  services?: any[];
+}) {
   const [projectType, setProjectType] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const projectTypes =
+    services.length > 0
+      ? [...services.filter((s) => s.is_visible).map((s) => s.title), "Other"]
+      : ["Kitchens", "Wardrobes", "Living Spaces", "Interiors", "Other"];
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const name = formData.get("name") as string;
+      const email = formData.get("email") as string;
+      const phone = formData.get("phone") as string;
+      const location = formData.get("location") as string;
+      const service = projectType;
+      const msgText =
+        projectType === "Other"
+          ? `[Specify: ${formData.get("specify_type")}] ${formData.get("specify_description")}`
+          : (formData.get("message") as string);
+
+      const fullMessage = `[Location: ${location}] ${msgText}`;
+
+      const { error } = await supabase
+        .from("enquiries")
+        .insert([{ name, email, phone, service, message: fullMessage, status: "New" }]);
+
+      if (error) throw error;
+
+      toast.success("Thank you. We have received your request and will be in touch shortly.");
+      e.currentTarget.reset();
+      setProjectType("");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to submit enquiry. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <section id="contact" className="relative bg-charcoal pt-32 pb-0 text-cream md:pt-40 md:pb-0">
@@ -1034,7 +1231,10 @@ function Contact() {
                 <TextScramble text="Contact" className="eyebrow text-cream/60" />
               </span>
             </div>
-            <SplitHeading text="Begin a considered conversation." className="text-4xl text-cream md:text-5xl" />
+            <SplitHeading
+              text="Begin a considered conversation."
+              className="text-4xl text-cream md:text-5xl"
+            />
           </Reveal3D>
 
           <Reveal3D delay={0.2} rotateX={8}>
@@ -1049,25 +1249,29 @@ function Contact() {
               <div>
                 <div className="eyebrow text-cream/50">Studio</div>
                 <div className="mt-2 text-base leading-relaxed">
-                  No.105, Parvathi Plaza, Richmond Rd,<br />Richmond Town, Bengaluru, Karnataka 560025
+                  {config.contact_address ||
+                    "No.105, Parvathi Plaza, Richmond Rd, Richmond Town, Bengaluru, Karnataka 560025"}
                 </div>
               </div>
               <div>
                 <div className="eyebrow text-cream/50">Direct</div>
                 <div className="mt-2 text-base">
-                  <a href="tel:+919902599515" className="hover:text-gold transition-colors">
-                    +91-9902599515
+                  <a
+                    href={`tel:${config.contact_phone || "+919902599515"}`}
+                    className="hover:text-gold transition-colors"
+                  >
+                    {config.contact_phone || "+91-9902599515"}
                   </a>
                 </div>
               </div>
               <div>
                 <div className="eyebrow text-cream/50">Email</div>
                 <div className="mt-2 text-base space-y-1">
-                  <a href="mailto:info@studioyoungdesigns.com" className="hover:text-gold transition-colors block">
-                    info@studioyoungdesigns.com
-                  </a>
-                  <a href="mailto:youngdesigns9@gmail.com" className="hover:text-gold transition-colors block">
-                    youngdesigns9@gmail.com
+                  <a
+                    href={`mailto:${config.contact_email || "info@studioyoungdesigns.com"}`}
+                    className="hover:text-gold transition-colors block"
+                  >
+                    {config.contact_email || "info@studioyoungdesigns.com"}
                   </a>
                   <div className="text-cream/40 text-sm mt-1 italic">We reply within 24 Hrs</div>
                 </div>
@@ -1075,35 +1279,27 @@ function Contact() {
               <div>
                 <div className="eyebrow text-cream/50">Hours</div>
                 <div className="mt-2 text-base space-y-1">
-                  <div>Mon–Sat · 10:30 AM – 8:00 PM</div>
-                  <div>Sun · 11:00 AM – 6:00 PM</div>
+                  <div>{config.contact_hours || "Mon–Sat · 10:30 AM – 8:00 PM"}</div>
                 </div>
               </div>
             </div>
           </Reveal3D>
-
         </div>
 
         <Reveal3D delay={0.15} rotateX={8} rotateY={6} className="md:col-span-6 md:col-start-7">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert("Thank you. We'll be in touch shortly.");
-            }}
-            className="space-y-8"
-          >
+          <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
               <Field label="Name" name="name" required delay={0} />
               <Field label="Email" name="email" type="email" required delay={0.1} />
               <Field label="Phone" name="phone" required delay={0.2} />
               <Field label="Location" name="location" required delay={0.3} />
             </div>
-            
+
             <div>
               <SelectField
                 label="Project type"
                 name="type"
-                options={["Kitchens", "Wardrobes", "Living Spaces", "Interiors", "Other"]}
+                options={projectTypes}
                 value={projectType}
                 onChange={setProjectType}
                 required
@@ -1122,7 +1318,13 @@ function Contact() {
                   className="space-y-8 overflow-hidden"
                 >
                   <Field label="Specify what you want" name="specify_type" required delay={0} />
-                  <Field label="Custom project description" name="specify_description" textarea required delay={0.1} />
+                  <Field
+                    label="Custom project description"
+                    name="specify_description"
+                    textarea
+                    required
+                    delay={0.1}
+                  />
                 </motion.div>
               )}
 
@@ -1135,7 +1337,13 @@ function Contact() {
                   transition={{ duration: 0.4, ease: EASE_SMOOTH }}
                   className="overflow-hidden"
                 >
-                  <Field label="Tell us about your space" name="message" textarea required delay={0} />
+                  <Field
+                    label="Tell us about your space"
+                    name="message"
+                    textarea
+                    required
+                    delay={0}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1148,10 +1356,7 @@ function Contact() {
                 whileTap={{ scale: 0.98 }}
               >
                 Send Enquiry{" "}
-                <motion.span
-                  className="inline-block"
-                  whileHover={{ x: 4 }}
-                >
+                <motion.span className="inline-block" whileHover={{ x: 4 }}>
                   →
                 </motion.span>
               </motion.button>
@@ -1274,7 +1479,7 @@ function SelectField({
       >
         {label} {required && <span className="text-gold">*</span>}
       </motion.span>
-      
+
       <input type="hidden" name={name} value={value} required={required} />
 
       <div
@@ -1345,20 +1550,89 @@ function SelectField({
    ═══════════════════════════════════════════════════════════════ */
 
 function Home() {
+  const { data: config = {} } = useQuery<Record<string, string>>({
+    queryKey: ["site_config"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("site_config").select("key, value");
+      if (error) throw error;
+      return (data || []).reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: images = {} } = useQuery<Record<string, string>>({
+    queryKey: ["layout_images"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("layout_images").select("key, image_url");
+      if (error) throw error;
+      return (data || []).reduce((acc, curr) => ({ ...acc, [curr.key]: curr.image_url }), {});
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: services = [] } = useQuery<any[]>({
+    queryKey: ["services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: testimonials = [] } = useQuery<any[]>({
+    queryKey: ["testimonials"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("testimonials")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const { data: whyItems = [] } = useQuery<any[]>({
+    queryKey: ["why_choose_us"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("why_choose_us")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
   return (
     <PageWrapper>
       <Loader />
-      <Hero />
-      <About />
-      <Marquee items={["Since 1981", "Bespoke Interiors", "40+ Years", "Bangalore", "Timeless Craft"]} />
-      <Why />
-      <Services />
+      <Hero config={config} images={images} />
+      <About config={config} images={images} />
+      <Marquee
+        items={["Since 1981", "Bespoke Interiors", `40+ Years`, "Bangalore", "Timeless Craft"]}
+      />
+      <Why config={config} items={whyItems} />
+      <Services services={services} config={config} />
       <Portfolio />
-      <Marquee dark items={["700+ Homes", "Turnkey Execution", "Walnut · Stone · Brass", "In-House Atelier"]} />
+      <Marquee
+        dark
+        items={[
+          `${config.stat_spaces || "700+"} Homes`,
+          "Turnkey Execution",
+          "Walnut · Stone · Brass",
+          "In-House Atelier",
+        ]}
+      />
       <Process />
-      <Counters />
-      <Testimonials />
-      <Contact />
+      <Counters config={config} />
+      <Testimonials testimonials={testimonials} />
+      <Contact config={config} services={services} />
     </PageWrapper>
   );
 }

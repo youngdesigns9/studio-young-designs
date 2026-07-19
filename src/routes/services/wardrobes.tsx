@@ -15,9 +15,15 @@ import svcComplete from "@/assets/service-complete.jpg";
 export const Route = createFileRoute("/services/wardrobes")({
   head: () => ({
     meta: [
-      { title: "Custom Wardrobes — Studio Young Designs" },
-      { name: "description", content: "Bespoke wardrobes in walnut, oak and lacquer with brushed metal hardware. Walk-in closets designed around your life." },
+      { title: "Bespoke Wardrobes — Studio Young Designs" },
+      {
+        name: "description",
+        content:
+          "Bespoke wardrobes in walnut, oak and lacquer with brushed metal hardware. Walk-in closets designed around your life.",
+      },
+      { property: "og:url", content: "https://studioyoungdesigns.com/services/wardrobes" },
     ],
+    links: [{ rel: "canonical", href: "https://studioyoungdesigns.com/services/wardrobes" }],
   }),
   component: WardrobesPage,
 });
@@ -33,27 +39,33 @@ const data: ServicePageData = {
   features: [
     {
       title: "Walk-In Closets",
-      description: "Full dressing rooms with islands, seating, and mirror walls — designed with the same attention as any living space in your home.",
+      description:
+        "Full dressing rooms with islands, seating, and mirror walls — designed with the same attention as any living space in your home.",
     },
     {
       title: "Sliding Door Systems",
-      description: "Precision-engineered sliding mechanisms in aluminium and steel, fitted with smoked glass, mirror, or timber panels.",
+      description:
+        "Precision-engineered sliding mechanisms in aluminium and steel, fitted with smoked glass, mirror, or timber panels.",
     },
     {
       title: "Custom Interiors",
-      description: "Adjustable shelving, pull-out shoe racks, jewelry drawers with velvet inserts, and illuminated hanging sections.",
+      description:
+        "Adjustable shelving, pull-out shoe racks, jewelry drawers with velvet inserts, and illuminated hanging sections.",
     },
     {
       title: "Dressing Areas",
-      description: "Integrated vanity tables, make-up mirrors with studio lighting, and personal display niches — quiet luxury built in.",
+      description:
+        "Integrated vanity tables, make-up mirrors with studio lighting, and personal display niches — quiet luxury built in.",
     },
     {
       title: "Material Palette",
-      description: "Walnut, oak, cedar lining, hand-lacquer in any RAL shade, brushed brass hardware, and soft-leather pulls.",
+      description:
+        "Walnut, oak, cedar lining, hand-lacquer in any RAL shade, brushed brass hardware, and soft-leather pulls.",
     },
     {
       title: "Smart Lighting",
-      description: "Motion-activated LED strips, backlit hanging rails, and accent spots — illuminating your collection with gallery-quality light.",
+      description:
+        "Motion-activated LED strips, backlit hanging rails, and accent spots — illuminating your collection with gallery-quality light.",
     },
   ],
   gallery: [

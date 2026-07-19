@@ -12,12 +12,23 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesIndexRouteImport } from './routes/services/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ServicesWardrobesRouteImport } from './routes/services/wardrobes'
 import { Route as ServicesLivingSpacesRouteImport } from './routes/services/living-spaces'
 import { Route as ServicesKitchensRouteImport } from './routes/services/kitchens'
 import { Route as ServicesInteriorsRouteImport } from './routes/services/interiors'
+import { Route as ServicesSlugRouteImport } from './routes/services/$slug'
+import { Route as AdminWhyRouteImport } from './routes/admin/why'
+import { Route as AdminTestimonialsRouteImport } from './routes/admin/testimonials'
+import { Route as AdminServicesRouteImport } from './routes/admin/services'
+import { Route as AdminJournalRouteImport } from './routes/admin/journal'
+import { Route as AdminHealthRouteImport } from './routes/admin/health'
+import { Route as AdminGalleryRouteImport } from './routes/admin/gallery'
+import { Route as AdminEnquiriesRouteImport } from './routes/admin/enquiries'
+import { Route as AdminConfigRouteImport } from './routes/admin/config'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -34,6 +45,11 @@ const GalleryRoute = GalleryRouteImport.update({
   path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +59,11 @@ const ServicesIndexRoute = ServicesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ServicesRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const ServicesWardrobesRoute = ServicesWardrobesRouteImport.update({
   id: '/wardrobes',
@@ -64,77 +85,187 @@ const ServicesInteriorsRoute = ServicesInteriorsRouteImport.update({
   path: '/interiors',
   getParentRoute: () => ServicesRoute,
 } as any)
+const ServicesSlugRoute = ServicesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ServicesRoute,
+} as any)
+const AdminWhyRoute = AdminWhyRouteImport.update({
+  id: '/why',
+  path: '/why',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTestimonialsRoute = AdminTestimonialsRouteImport.update({
+  id: '/testimonials',
+  path: '/testimonials',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminServicesRoute = AdminServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJournalRoute = AdminJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHealthRoute = AdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGalleryRoute = AdminGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEnquiriesRoute = AdminEnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfigRoute = AdminConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/gallery': typeof GalleryRoute
   '/journal': typeof JournalRoute
   '/services': typeof ServicesRouteWithChildren
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/enquiries': typeof AdminEnquiriesRoute
+  '/admin/gallery': typeof AdminGalleryRoute
+  '/admin/health': typeof AdminHealthRoute
+  '/admin/journal': typeof AdminJournalRoute
+  '/admin/services': typeof AdminServicesRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
+  '/admin/why': typeof AdminWhyRoute
+  '/services/$slug': typeof ServicesSlugRoute
   '/services/interiors': typeof ServicesInteriorsRoute
   '/services/kitchens': typeof ServicesKitchensRoute
   '/services/living-spaces': typeof ServicesLivingSpacesRoute
   '/services/wardrobes': typeof ServicesWardrobesRoute
+  '/admin/': typeof AdminIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/gallery': typeof GalleryRoute
   '/journal': typeof JournalRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/enquiries': typeof AdminEnquiriesRoute
+  '/admin/gallery': typeof AdminGalleryRoute
+  '/admin/health': typeof AdminHealthRoute
+  '/admin/journal': typeof AdminJournalRoute
+  '/admin/services': typeof AdminServicesRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
+  '/admin/why': typeof AdminWhyRoute
+  '/services/$slug': typeof ServicesSlugRoute
   '/services/interiors': typeof ServicesInteriorsRoute
   '/services/kitchens': typeof ServicesKitchensRoute
   '/services/living-spaces': typeof ServicesLivingSpacesRoute
   '/services/wardrobes': typeof ServicesWardrobesRoute
+  '/admin': typeof AdminIndexRoute
   '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/gallery': typeof GalleryRoute
   '/journal': typeof JournalRoute
   '/services': typeof ServicesRouteWithChildren
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/enquiries': typeof AdminEnquiriesRoute
+  '/admin/gallery': typeof AdminGalleryRoute
+  '/admin/health': typeof AdminHealthRoute
+  '/admin/journal': typeof AdminJournalRoute
+  '/admin/services': typeof AdminServicesRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
+  '/admin/why': typeof AdminWhyRoute
+  '/services/$slug': typeof ServicesSlugRoute
   '/services/interiors': typeof ServicesInteriorsRoute
   '/services/kitchens': typeof ServicesKitchensRoute
   '/services/living-spaces': typeof ServicesLivingSpacesRoute
   '/services/wardrobes': typeof ServicesWardrobesRoute
+  '/admin/': typeof AdminIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/gallery'
     | '/journal'
     | '/services'
+    | '/admin/config'
+    | '/admin/enquiries'
+    | '/admin/gallery'
+    | '/admin/health'
+    | '/admin/journal'
+    | '/admin/services'
+    | '/admin/testimonials'
+    | '/admin/why'
+    | '/services/$slug'
     | '/services/interiors'
     | '/services/kitchens'
     | '/services/living-spaces'
     | '/services/wardrobes'
+    | '/admin/'
     | '/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/gallery'
     | '/journal'
+    | '/admin/config'
+    | '/admin/enquiries'
+    | '/admin/gallery'
+    | '/admin/health'
+    | '/admin/journal'
+    | '/admin/services'
+    | '/admin/testimonials'
+    | '/admin/why'
+    | '/services/$slug'
     | '/services/interiors'
     | '/services/kitchens'
     | '/services/living-spaces'
     | '/services/wardrobes'
+    | '/admin'
     | '/services'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/gallery'
     | '/journal'
     | '/services'
+    | '/admin/config'
+    | '/admin/enquiries'
+    | '/admin/gallery'
+    | '/admin/health'
+    | '/admin/journal'
+    | '/admin/services'
+    | '/admin/testimonials'
+    | '/admin/why'
+    | '/services/$slug'
     | '/services/interiors'
     | '/services/kitchens'
     | '/services/living-spaces'
     | '/services/wardrobes'
+    | '/admin/'
     | '/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   GalleryRoute: typeof GalleryRoute
   JournalRoute: typeof JournalRoute
   ServicesRoute: typeof ServicesRouteWithChildren
@@ -163,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -176,6 +314,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/services/'
       preLoaderRoute: typeof ServicesIndexRouteImport
       parentRoute: typeof ServicesRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/services/wardrobes': {
       id: '/services/wardrobes'
@@ -205,10 +350,100 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesInteriorsRouteImport
       parentRoute: typeof ServicesRoute
     }
+    '/services/$slug': {
+      id: '/services/$slug'
+      path: '/$slug'
+      fullPath: '/services/$slug'
+      preLoaderRoute: typeof ServicesSlugRouteImport
+      parentRoute: typeof ServicesRoute
+    }
+    '/admin/why': {
+      id: '/admin/why'
+      path: '/why'
+      fullPath: '/admin/why'
+      preLoaderRoute: typeof AdminWhyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/testimonials': {
+      id: '/admin/testimonials'
+      path: '/testimonials'
+      fullPath: '/admin/testimonials'
+      preLoaderRoute: typeof AdminTestimonialsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/services': {
+      id: '/admin/services'
+      path: '/services'
+      fullPath: '/admin/services'
+      preLoaderRoute: typeof AdminServicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/journal': {
+      id: '/admin/journal'
+      path: '/journal'
+      fullPath: '/admin/journal'
+      preLoaderRoute: typeof AdminJournalRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/health': {
+      id: '/admin/health'
+      path: '/health'
+      fullPath: '/admin/health'
+      preLoaderRoute: typeof AdminHealthRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gallery': {
+      id: '/admin/gallery'
+      path: '/gallery'
+      fullPath: '/admin/gallery'
+      preLoaderRoute: typeof AdminGalleryRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/enquiries': {
+      id: '/admin/enquiries'
+      path: '/enquiries'
+      fullPath: '/admin/enquiries'
+      preLoaderRoute: typeof AdminEnquiriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/config': {
+      id: '/admin/config'
+      path: '/config'
+      fullPath: '/admin/config'
+      preLoaderRoute: typeof AdminConfigRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminConfigRoute: typeof AdminConfigRoute
+  AdminEnquiriesRoute: typeof AdminEnquiriesRoute
+  AdminGalleryRoute: typeof AdminGalleryRoute
+  AdminHealthRoute: typeof AdminHealthRoute
+  AdminJournalRoute: typeof AdminJournalRoute
+  AdminServicesRoute: typeof AdminServicesRoute
+  AdminTestimonialsRoute: typeof AdminTestimonialsRoute
+  AdminWhyRoute: typeof AdminWhyRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminConfigRoute: AdminConfigRoute,
+  AdminEnquiriesRoute: AdminEnquiriesRoute,
+  AdminGalleryRoute: AdminGalleryRoute,
+  AdminHealthRoute: AdminHealthRoute,
+  AdminJournalRoute: AdminJournalRoute,
+  AdminServicesRoute: AdminServicesRoute,
+  AdminTestimonialsRoute: AdminTestimonialsRoute,
+  AdminWhyRoute: AdminWhyRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface ServicesRouteChildren {
+  ServicesSlugRoute: typeof ServicesSlugRoute
   ServicesInteriorsRoute: typeof ServicesInteriorsRoute
   ServicesKitchensRoute: typeof ServicesKitchensRoute
   ServicesLivingSpacesRoute: typeof ServicesLivingSpacesRoute
@@ -217,6 +452,7 @@ interface ServicesRouteChildren {
 }
 
 const ServicesRouteChildren: ServicesRouteChildren = {
+  ServicesSlugRoute: ServicesSlugRoute,
   ServicesInteriorsRoute: ServicesInteriorsRoute,
   ServicesKitchensRoute: ServicesKitchensRoute,
   ServicesLivingSpacesRoute: ServicesLivingSpacesRoute,
@@ -230,6 +466,7 @@ const ServicesRouteWithChildren = ServicesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   GalleryRoute: GalleryRoute,
   JournalRoute: JournalRoute,
   ServicesRoute: ServicesRouteWithChildren,
