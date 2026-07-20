@@ -13,6 +13,7 @@ import {
   ArrowDown,
   Eye,
   EyeOff,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,6 +33,7 @@ interface GalleryItem {
   span: string;
   display_order: number;
   is_visible: boolean;
+  is_featured?: boolean;
 }
 
 function GalleryComponent() {
@@ -48,6 +50,7 @@ function GalleryComponent() {
   const [subtitle, setSubtitle] = useState("");
   const [category, setCategory] = useState("");
   const [span, setSpan] = useState("standard");
+  const [isFeatured, setIsFeatured] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -109,6 +112,7 @@ function GalleryComponent() {
     setSubtitle(item.subtitle);
     setCategory(item.category);
     setSpan(item.span);
+    setIsFeatured(item.is_featured !== false);
     setPreviewUrl(item.image_url);
     setIsModalOpen(true);
   };
@@ -146,12 +150,36 @@ function GalleryComponent() {
           finalUrl = await uploadImageFile(imageFile);
         }
 
+        const updatePayload: any = {
+          title,
+          subtitle,
+          category,
+          span,
+          image_url: finalUrl,
+          is_featured: isFeatured,
+        };
+
         const { error } = await supabase
           .from("gallery")
-          .update({ title, subtitle, category, span, image_url: finalUrl })
+          .update(updatePayload)
           .eq("id", editingItem.id);
 
-        if (error) throw error;
+        if (
+          error &&
+          (error.message?.includes("is_featured") ||
+            error.code === "PGRST204" ||
+            error.code === "42703")
+        ) {
+          delete updatePayload.is_featured;
+          const retry = await supabase
+            .from("gallery")
+            .update(updatePayload)
+            .eq("id", editingItem.id);
+          if (retry.error) throw retry.error;
+        } else if (error) {
+          throw error;
+        }
+
         toast.success("Gallery item updated successfully");
       } else {
         if (!imageFile) {
@@ -161,20 +189,32 @@ function GalleryComponent() {
         }
 
         const uploadedUrl = await uploadImageFile(imageFile);
+        const insertPayload: any = {
+          title,
+          subtitle,
+          category,
+          span,
+          image_url: uploadedUrl,
+          display_order: items.length,
+          is_visible: true,
+          is_featured: isFeatured,
+        };
 
-        const { error } = await supabase.from("gallery").insert([
-          {
-            title,
-            subtitle,
-            category,
-            span,
-            image_url: uploadedUrl,
-            display_order: items.length,
-            is_visible: true,
-          },
-        ]);
+        const { error } = await supabase.from("gallery").insert([insertPayload]);
 
-        if (error) throw error;
+        if (
+          error &&
+          (error.message?.includes("is_featured") ||
+            error.code === "PGRST204" ||
+            error.code === "42703")
+        ) {
+          delete insertPayload.is_featured;
+          const retry = await supabase.from("gallery").insert([insertPayload]);
+          if (retry.error) throw retry.error;
+        } else if (error) {
+          throw error;
+        }
+
         toast.success("New gallery item uploaded successfully.");
       }
 
@@ -201,6 +241,24 @@ function GalleryComponent() {
       fetchGallery();
     } catch (err: any) {
       toast.error("Failed to update visibility.");
+    }
+  };
+
+  const toggleFeatured = async (item: GalleryItem) => {
+    try {
+      const nextFeatured = item.is_featured === false ? true : false;
+      const { error } = await supabase
+        .from("gallery")
+        .update({ is_featured: nextFeatured })
+        .eq("id", item.id);
+
+      if (error) throw error;
+      toast.success(
+        nextFeatured ? "Pinned to Homepage Selected Work!" : "Unpinned from Selected Work.",
+      );
+      fetchGallery();
+    } catch (err: any) {
+      toast.error("Failed to update homepage featured status.");
     }
   };
 
@@ -257,6 +315,7 @@ function GalleryComponent() {
     setSubtitle("");
     setCategory(CATEGORIES[0]);
     setSpan("standard");
+    setIsFeatured(true);
     setImageFile(null);
     setPreviewUrl(null);
     setEditingItem(null);
@@ -307,6 +366,21 @@ function GalleryComponent() {
             <div className="aspect-video w-full overflow-hidden relative bg-stone-100 dark:bg-stone-900">
               <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
               <div className="absolute top-2 right-2 flex gap-1.5">
+                <button
+                  onClick={() => toggleFeatured(item)}
+                  className={`p-1.5 rounded shadow-sm border transition-all cursor-pointer ${
+                    item.is_featured !== false
+                      ? "bg-amber-500 text-white border-amber-600"
+                      : "bg-white/95 dark:bg-[#1C1C1F]/90 text-stone-400 border-stone-200/50 dark:border-stone-800"
+                  }`}
+                  title={
+                    item.is_featured !== false
+                      ? "Featured on Homepage Selected Work"
+                      : "Pin to Homepage Selected Work"
+                  }
+                >
+                  <Star size={12} className={item.is_featured !== false ? "fill-white" : ""} />
+                </button>
                 <button
                   onClick={() => toggleVisibility(item)}
                   className="p-1.5 rounded bg-white/95 dark:bg-[#1C1C1F]/90 text-stone-800 dark:text-stone-200 shadow-sm border border-stone-200/50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-900 transition-all cursor-pointer"
@@ -505,6 +579,22 @@ function GalleryComponent() {
                       <option value="wide">Wide Card</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 pt-1">
+                  <input
+                    type="checkbox"
+                    id="isFeatured"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="h-4 w-4 rounded border-stone-300 text-[#cb2026] focus:ring-[#cb2026] cursor-pointer"
+                  />
+                  <label
+                    htmlFor="isFeatured"
+                    className="text-xs font-semibold text-stone-800 dark:text-stone-200 cursor-pointer"
+                  >
+                    Feature in Homepage "Selected Work" Section
+                  </label>
                 </div>
 
                 <div className="pt-4 flex gap-3">

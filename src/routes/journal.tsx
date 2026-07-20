@@ -183,6 +183,28 @@ function JournalPage() {
     staleTime: 60 * 1000,
   });
 
+  const parseKeywords = (p: any) => {
+    if (p.tags) {
+      if (Array.isArray(p.tags) && p.tags.length > 0) return p.tags;
+      if (typeof p.tags === "string" && p.tags.trim()) {
+        return p.tags
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+      }
+    }
+    if (p.keywords) {
+      if (Array.isArray(p.keywords) && p.keywords.length > 0) return p.keywords;
+      if (typeof p.keywords === "string" && p.keywords.trim()) {
+        return p.keywords
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+      }
+    }
+    return p.category ? [p.category] : ["Design"];
+  };
+
   const postsList: JournalPost[] =
     dbPosts.length > 0
       ? dbPosts
@@ -203,7 +225,7 @@ function JournalPage() {
                 ? "guides"
                 : ((p.category === "Material Studies" ? "materials" : "design-tips") as Category),
             image: p.image_url,
-            keywords: p.keywords || [],
+            keywords: parseKeywords(p),
           }))
       : defaultPosts;
 
@@ -303,6 +325,19 @@ function JournalPage() {
                     {post.excerpt}
                   </p>
 
+                  {post.keywords && post.keywords.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {post.keywords.map((kw) => (
+                        <span
+                          key={kw}
+                          className="bg-charcoal/5 border border-charcoal/10 text-charcoal/70 text-[10px] px-2 py-0.5 rounded-sm font-medium tracking-wide"
+                        >
+                          #{kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="mt-6 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-charcoal font-medium">
                     <span>Read Article</span>
                     <motion.span
@@ -386,21 +421,23 @@ function JournalPage() {
                 </div>
 
                 {/* Keywords/Tags */}
-                <div className="pt-8 border-t border-cream/10">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-xs text-cream/40 uppercase tracking-widest mr-2">
-                      Tags:
-                    </span>
-                    {selectedPost.keywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="bg-cream/5 border border-cream/10 px-3 py-1 rounded-sm text-xs text-cream/60"
-                      >
-                        #{kw}
+                {selectedPost.keywords && selectedPost.keywords.length > 0 && (
+                  <div className="pt-8 border-t border-cream/10">
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-xs text-cream/40 uppercase tracking-widest mr-2">
+                        Tags:
                       </span>
-                    ))}
+                      {selectedPost.keywords.map((kw) => (
+                        <span
+                          key={kw}
+                          className="bg-gold/10 border border-gold/30 px-3 py-1 rounded-sm text-xs text-gold font-medium"
+                        >
+                          #{kw}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </article>
             </motion.div>
           </motion.div>

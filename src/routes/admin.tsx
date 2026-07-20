@@ -23,6 +23,7 @@ import {
   Sun,
   Moon,
   Activity,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -289,6 +290,7 @@ function AdminLayoutComponent() {
   const menuItems = [
     { label: "Overview Dashboard", icon: LayoutDashboard, to: "/admin" },
     { label: "Leads / Enquiries", icon: MessageSquare, to: "/admin/enquiries" },
+    { label: "About Page", icon: BookOpen, to: "/admin/about" },
     { label: "Gallery Portfolio", icon: ImageIcon, to: "/admin/gallery" },
     { label: "Why Choose Us", icon: Award, to: "/admin/why" },
     { label: "Services Page", icon: Briefcase, to: "/admin/services" },

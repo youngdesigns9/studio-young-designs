@@ -115,6 +115,7 @@ CREATE TABLE journal_posts (
   image_url TEXT NOT NULL,
   read_time TEXT DEFAULT '5 min read',
   category TEXT DEFAULT 'Design Theory',
+  tags TEXT[] DEFAULT '{}',
   is_visible BOOLEAN DEFAULT TRUE,
   published_date DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -161,6 +162,7 @@ CREATE POLICY "Allow public read-only to journal_posts" ON journal_posts FOR SEL
 
 -- 2. PUBLIC WRITE POLICIES
 CREATE POLICY "Allow public insert on enquiries" ON enquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public insert on testimonials" ON testimonials FOR INSERT WITH CHECK (true);
 
 -- 3. SECURE ADMIN ALL POLICIES (Requires user to be authenticated)
 CREATE POLICY "Allow authenticated to manage site_config" ON site_config FOR ALL USING (auth.role() = 'authenticated');

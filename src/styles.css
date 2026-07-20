@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&display=swap");
 @import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
@@ -104,6 +105,10 @@
 @utility font-display {
   font-family: var(--font-display);
   font-feature-settings: "liga", "dlig";
+}
+
+@utility font-script {
+  font-family: "Alex Brush", "Great Vibes", cursive;
 }
 
 @utility eyebrow {

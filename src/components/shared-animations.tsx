@@ -390,7 +390,7 @@ export function Marquee({
 
 const NAV_LINKS: Array<{ label: string; to: string; hash?: string }> = [
   { label: "Home", to: "/" },
-  { label: "About Us", to: "/", hash: "about" },
+  { label: "About Us", to: "/about" },
   { label: "Services", to: "/services" },
   { label: "Gallery", to: "/gallery" },
   { label: "Journal", to: "/journal" },

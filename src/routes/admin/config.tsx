@@ -18,6 +18,7 @@ import {
   Instagram,
   Trash2,
   Plus,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/admin/config")({
   component: ConfigComponent,
 });
 
-type TabType = "media" | "copy" | "stats" | "contact" | "social";
+type TabType = "media" | "copy" | "video" | "stats" | "contact" | "social";
 
 function ConfigComponent() {
   const [config, setConfig] = useState<Record<string, string>>({});
@@ -275,6 +276,7 @@ function ConfigComponent() {
   const tabs: Array<{ id: TabType; label: string; icon: any }> = [
     { id: "media", label: "Branding & Media", icon: ImageIcon },
     { id: "copy", label: "Landing & Copy", icon: Globe },
+    { id: "video", label: "YouTube Showcase Video", icon: Youtube },
     { id: "stats", label: "Stats & Numbers", icon: Hash },
     { id: "contact", label: "Contact Details", icon: Mail },
     { id: "social", label: "Social Links", icon: Share2 },
@@ -564,6 +566,123 @@ function ConfigComponent() {
                     rows={3}
                     placeholder="We are a small studio by choice..."
                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white focus:border-[#cb2026] focus:bg-white dark:focus:bg-transparent outline-none text-xs leading-relaxed"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* 3. YOUTUBE VIDEO SHOWCASE */}
+            {activeTab === "video" && (
+              <motion.div
+                key="video"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6 max-w-3xl"
+              >
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
+                    Homepage YouTube Video Showcase
+                  </span>
+                  <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1">
+                    Manage the featured YouTube studio film shown in 16:9 cinema view on the
+                    homepage.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
+                    YouTube Video Link / URL
+                  </label>
+                  <input
+                    type="text"
+                    value={config.youtube_video_url || ""}
+                    onChange={(e) => handleTextChange("youtube_video_url", e.target.value)}
+                    placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/..."
+                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white focus:border-[#cb2026] outline-none text-sm font-semibold"
+                  />
+                  <p className="text-[10px] text-stone-400 dark:text-stone-550 italic">
+                    Paste any standard YouTube link (e.g. youtube.com/watch?v=... or youtu.be/...).
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
+                    Video Section Heading Title
+                  </label>
+                  <input
+                    type="text"
+                    value={config.video_title || ""}
+                    onChange={(e) => handleTextChange("video_title", e.target.value)}
+                    placeholder="e.g. Our Studio in Motion"
+                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white focus:border-[#cb2026] outline-none text-sm font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
+                    Video Section Subtitle / Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={config.video_subtitle || ""}
+                    onChange={(e) => handleTextChange("video_subtitle", e.target.value)}
+                    placeholder="e.g. Step inside our Bangalore atelier..."
+                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white focus:border-[#cb2026] outline-none text-xs leading-relaxed"
+                  />
+                </div>
+
+                <div className="h-px bg-stone-100 dark:bg-stone-850 my-6" />
+
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
+                    YouTube Channel & Handle Settings
+                  </span>
+                  <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1">
+                    Details shown in the channel subscription banner below the featured video.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">
+                      Channel Name
+                    </label>
+                    <input
+                      type="text"
+                      value={config.youtube_channel_name || "Studio Young Designs"}
+                      onChange={(e) => handleTextChange("youtube_channel_name", e.target.value)}
+                      className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">
+                      Channel Handle
+                    </label>
+                    <input
+                      type="text"
+                      value={config.youtube_channel_handle || "@studioyoungdesigns2118"}
+                      onChange={(e) => handleTextChange("youtube_channel_handle", e.target.value)}
+                      className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white text-xs font-mono font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">
+                    YouTube Channel Direct Link
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      config.youtube_channel_url ||
+                      "https://www.youtube.com/@studioyoungdesigns2118"
+                    }
+                    onChange={(e) => handleTextChange("youtube_channel_url", e.target.value)}
+                    placeholder="https://www.youtube.com/@studioyoungdesigns2118"
+                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white text-xs"
                   />
                 </div>
               </motion.div>

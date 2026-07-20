@@ -13,7 +13,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/utils/supabase";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Star, X, Play, Youtube } from "lucide-react";
 
 import {
   PageWrapper,
@@ -381,15 +381,27 @@ function About({
   const imgRef = useRef<HTMLDivElement>(null);
   const imgInView = useInView(imgRef, { once: true, margin: "-100px" });
 
-  const milestones = [
-    ["1981", "Studio founded in Bangalore, rooted in bespoke woodwork."],
-    ["1998", "Expansion into complete residential interior design."],
-    ["2010", "Custom modular kitchens & wardrobes atelier established."],
-    [
-      config.stat_years ? config.stat_years.replace(/\D/g, "") : "2024",
-      `${config.stat_spaces || "700+"} homes and spaces delivered across South India.`,
-    ],
-  ];
+  const milestones = useMemo(() => {
+    if (config.milestones_data) {
+      try {
+        const parsed = JSON.parse(config.milestones_data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((m: any) => [m.year || "1981", m.text || m.desc || m.title || ""]);
+        }
+      } catch (e) {
+        console.error("Failed to parse milestones_data", e);
+      }
+    }
+    return [
+      ["1981", "Studio founded in Bangalore, rooted in bespoke woodwork."],
+      ["1998", "Expansion into complete residential interior design."],
+      ["2010", "Custom modular kitchens & wardrobes atelier established."],
+      [
+        config.stat_years ? config.stat_years.replace(/\D/g, "") : "2024",
+        `${config.stat_spaces || "700+"} homes and spaces delivered across South India.`,
+      ],
+    ];
+  }, [config.milestones_data, config.stat_years, config.stat_spaces]);
 
   return (
     <section id="about" ref={ref} className="relative bg-cream py-32 md:py-44">
@@ -470,6 +482,20 @@ function About({
                   <div className="hairline mt-6" />
                 </Reveal3D>
               ))}
+            </div>
+
+            <div className="mt-12">
+              <Magnetic>
+                <Link
+                  to="/about"
+                  className="group inline-flex items-center gap-3 bg-charcoal text-cream px-7 py-4 text-xs font-semibold uppercase tracking-[0.24em] hover:bg-gold hover:text-charcoal transition-all duration-300"
+                >
+                  <span>Discover Our Full Story</span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </Link>
+              </Magnetic>
             </div>
           </div>
         </div>
@@ -732,12 +758,40 @@ function ServiceRow({
    ═══════════════════════════════════════════════════════════════ */
 
 function Portfolio() {
-  const pieces = [
-    { img: p1, title: "Malabar Residence", place: "Dining · Bangalore", h: "tall" },
-    { img: p2, title: "Sadashivanagar House", place: "Master Bedroom", h: "short" },
-    { img: p3, title: "Cubbon Study", place: "Home Library", h: "short" },
-    { img: p4, title: "Whitefield Villa", place: "Marble & Walnut Bath", h: "tall" },
-  ];
+  const { data: dbGallery = [] } = useQuery<any[]>({
+    queryKey: ["gallery"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery")
+        .select("*")
+        .eq("is_visible", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const pieces = useMemo(() => {
+    if (dbGallery.length > 0) {
+      const featuredItems = dbGallery.filter((item) => item.is_featured !== false);
+      const itemsToDisplay = featuredItems.length > 0 ? featuredItems : dbGallery;
+      return itemsToDisplay.slice(0, 6).map((item, i) => ({
+        id: item.id,
+        img: item.image_url,
+        title: item.title,
+        place: item.subtitle || item.category,
+        h: item.span === "tall" || i % 2 === 0 ? "tall" : "short",
+      }));
+    }
+    return [
+      { img: p1, title: "Malabar Residence", place: "Dining · Bangalore", h: "tall" },
+      { img: p2, title: "Sadashivanagar House", place: "Master Bedroom", h: "short" },
+      { img: p3, title: "Cubbon Study", place: "Home Library", h: "short" },
+      { img: p4, title: "Whitefield Villa", place: "Marble & Walnut Bath", h: "tall" },
+    ];
+  }, [dbGallery]);
+
   return (
     <section id="portfolio" className="relative bg-background py-32 md:py-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
@@ -849,6 +903,155 @@ function PortfolioCard({
         </div>
       </Link>
     </TiltCard>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STUDIO VIDEO SHOWCASE — 16:9 Cinema Frame with Gold Accents
+   ═══════════════════════════════════════════════════════════════ */
+
+function VideoShowcase({ config = {} }: { config?: Record<string, string> }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const rawUrl = config.youtube_video_url || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+  const getYouTubeEmbedUrl = (url: string) => {
+    if (!url) return "https://www.youtube.com/embed/dQw4w9WgXcQ";
+    if (url.includes("embed/")) return `${url}${url.includes("?") ? "&" : "?"}autoplay=1&rel=0`;
+
+    const match = url.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+    );
+    if (match && match[1]) {
+      return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=1&rel=0`;
+    }
+    return url;
+  };
+
+  const embedUrl = getYouTubeEmbedUrl(rawUrl);
+  const videoTitle = config.video_title || "Our Studio in Motion";
+  const videoSubtitle =
+    config.video_subtitle ||
+    "Step inside our Bangalore atelier and experience 40 years of precision craftsmanship, fine materials, and spatial harmony.";
+  const videoPoster = config.video_poster_url || p1;
+
+  return (
+    <section className="relative bg-charcoal text-cream py-32 md:py-40 overflow-hidden">
+      {/* Background Ambient Glow */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-gold/10 blur-[120px]" />
+
+      <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
+        <div className="mb-16 grid grid-cols-1 items-end gap-8 md:grid-cols-12">
+          <div className="md:col-span-7">
+            <Reveal3D rotateX={10}>
+              <div className="mb-6 flex items-center gap-3">
+                <span className="gold-rule" />
+                <span className="eyebrow text-cream/60">
+                  <TextScramble text="Film & Crafts" className="eyebrow text-cream/60" />
+                </span>
+              </div>
+            </Reveal3D>
+            <SplitHeading
+              text={videoTitle}
+              className="text-4xl text-cream md:text-6xl font-display"
+            />
+          </div>
+          <Reveal3D delay={0.2} rotateX={6} className="md:col-span-5">
+            <p className="text-base leading-relaxed text-cream/70">{videoSubtitle}</p>
+          </Reveal3D>
+        </div>
+
+        {/* 16:9 Cinema Frame */}
+        <Reveal3D delay={0.15} rotateX={8}>
+          <div className="relative aspect-[16/9] w-full max-w-5xl mx-auto overflow-hidden rounded-sm border border-gold/30 bg-charcoal-light shadow-2xl group">
+            {!isPlaying ? (
+              <div
+                className="relative h-full w-full cursor-pointer"
+                onClick={() => setIsPlaying(true)}
+              >
+                <img
+                  src={videoPoster}
+                  alt={videoTitle}
+                  className="h-full w-full object-cover brightness-75 group-hover:brightness-90 group-hover:scale-105 transition-all duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity group-hover:opacity-20" />
+
+                {/* Play Button Overlay */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  <motion.div
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="grid h-20 w-20 md:h-24 md:w-24 place-items-center rounded-full bg-gold text-charcoal shadow-2xl transition-transform"
+                  >
+                    <Play size={32} className="ml-1 fill-charcoal" />
+                  </motion.div>
+                  <span className="text-xs uppercase tracking-[0.28em] text-cream font-medium tracking-widest drop-shadow">
+                    Watch Studio Film
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <iframe
+                src={embedUrl}
+                title={videoTitle}
+                className="h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            )}
+          </div>
+        </Reveal3D>
+
+        {/* YouTube Channel Subscription Banner */}
+        <Reveal3D delay={0.3} rotateX={6}>
+          <div className="mt-8 max-w-5xl mx-auto border border-gold/25 bg-gradient-to-r from-charcoal-light via-[#1e1c1b] to-charcoal-light p-6 md:p-8 rounded-sm shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              {/* Studio Young Designs Logo on White Background */}
+              <div className="h-16 w-16 rounded-full bg-white border border-gold/40 p-2.5 flex items-center justify-center shadow-xl flex-shrink-0">
+                <img
+                  src="/logo-transparent.png"
+                  alt="Studio Young Designs"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div>
+                <h4 className="font-display text-xl md:text-2xl text-cream font-semibold tracking-wide flex items-center gap-2">
+                  <span>{config.youtube_channel_name || "Studio Young Designs"}</span>
+                </h4>
+                <p className="text-xs text-gold/90 font-mono mt-0.5 font-medium">
+                  {config.youtube_channel_handle || "@studioyoungdesigns2118"}
+                </p>
+                <p className="text-xs text-cream/60 mt-1 font-sans font-light">
+                  Subscribe to explore our full library of interior walkthroughs, kitchen tours, and
+                  design stories.
+                </p>
+              </div>
+            </div>
+
+            <Magnetic>
+              <a
+                href={
+                  config.youtube_channel_url || "https://www.youtube.com/@studioyoungdesigns2118"
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] transition-all flex-shrink-0 shadow-lg rounded-sm cursor-pointer"
+              >
+                {/* Official YouTube Play Icon */}
+                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                  <path
+                    d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"
+                    fill="#FFFFFF"
+                  />
+                  <path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#CC0000" />
+                </svg>
+                <span>Visit YouTube Channel</span>
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </a>
+            </Magnetic>
+          </div>
+        </Reveal3D>
+      </div>
+    </section>
   );
 }
 
@@ -1064,6 +1267,14 @@ function Testimonials({ testimonials = [] }: { testimonials?: any[] }) {
   const [active, setActive] = useState(0);
   const [isMobile, setIsMobile] = useState(true);
 
+  // Review Modal State
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState("");
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -1077,28 +1288,79 @@ function Testimonials({ testimonials = [] }: { testimonials?: any[] }) {
     return () => clearInterval(id);
   }, [items.length, isMobile]);
 
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerName.trim() || !reviewContent.trim()) {
+      toast.error("Please enter your name and review words.");
+      return;
+    }
+    if (reviewContent.length > 220) {
+      toast.error("Review content must be 220 characters or less for uniform card presentation.");
+      return;
+    }
+    setSubmittingReview(true);
+
+    try {
+      const { error } = await supabase.from("testimonials").insert([
+        {
+          customer_name: customerName,
+          company_name: companyName || "Client",
+          rating,
+          content: reviewContent,
+          is_approved: false,
+        },
+      ]);
+
+      if (error) throw error;
+
+      toast.success("Thank you for your feedback! Your review has been submitted for approval.");
+      setIsReviewModalOpen(false);
+      setCustomerName("");
+      setCompanyName("");
+      setRating(5);
+      setReviewContent("");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to submit review. Please try again.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   return (
     <section className="relative bg-background py-32 md:py-40 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
-        <div className="mb-20 max-w-3xl">
-          <Reveal3D rotateX={10}>
-            <div className="mb-6 flex items-center gap-3">
-              <span className="gold-rule" />
-              <span className="eyebrow">
-                <TextScramble text="Kind Words" />
-              </span>
-            </div>
+        <div className="mb-20 flex flex-wrap items-end justify-between gap-8">
+          <div className="max-w-2xl">
+            <Reveal3D rotateX={10}>
+              <div className="mb-6 flex items-center gap-3">
+                <span className="gold-rule" />
+                <span className="eyebrow">
+                  <TextScramble text="Kind Words" />
+                </span>
+              </div>
+            </Reveal3D>
+            <SplitHeading
+              text="From the families we've built for."
+              className="text-4xl md:text-6xl"
+            />
+          </div>
+
+          <Reveal3D delay={0.2} rotateX={6}>
+            <button
+              onClick={() => setIsReviewModalOpen(true)}
+              className="inline-flex items-center gap-2 border border-gold/40 bg-cream/10 px-5 py-3 text-[11px] uppercase tracking-[0.2em] text-foreground hover:bg-gold hover:text-charcoal transition-all duration-300 rounded-sm cursor-pointer shadow-sm"
+            >
+              <Star size={14} className="text-gold fill-gold" />
+              <span>Write a Client Review</span>
+            </button>
           </Reveal3D>
-          <SplitHeading
-            text="From the families we've built for."
-            className="text-4xl md:text-6xl"
-          />
         </div>
 
         <div className="relative" style={{ perspective: "1000px" }}>
           <div
             className="flex flex-col gap-6 md:flex-row md:gap-0 md:justify-center md:items-center"
-            style={{ minHeight: isMobile ? "auto" : 320 }}
+            style={{ minHeight: isMobile ? "auto" : 340 }}
           >
             {items.map((t, i) => {
               const offset = i - active;
@@ -1125,19 +1387,28 @@ function Testimonials({ testimonials = [] }: { testimonials?: any[] }) {
                         }
                   }
                   transition={{ duration: 0.8, ease: EASE_SMOOTH }}
-                  className={`flex-shrink-0 w-full md:w-[420px] md:absolute md:left-1/2 md:-translate-x-1/2 flex flex-col justify-between border-t border-border pt-8 p-8 ${
-                    isActive && !isMobile ? "shadow-2xl bg-cream" : "bg-background"
+                  className={`flex-shrink-0 w-full md:w-[440px] md:absolute md:left-1/2 md:-translate-x-1/2 flex flex-col justify-between border pt-8 p-8 min-h-[300px] h-[300px] rounded-sm ${
+                    isActive && !isMobile
+                      ? "shadow-2xl bg-cream border-gold/30 text-charcoal"
+                      : "bg-background border-border/60 text-foreground"
                   }`}
                   style={{ transformStyle: "preserve-3d" }}
                 >
-                  <blockquote className="font-display text-2xl leading-snug text-foreground md:text-[1.65rem]">
+                  <blockquote className="font-display text-xl leading-relaxed md:text-2xl line-clamp-4 overflow-hidden">
                     <span className="text-gold">"</span>
                     {t.q}
                     <span className="text-gold">"</span>
                   </blockquote>
-                  <figcaption className="mt-10">
-                    <div className="text-sm font-medium">{t.n}</div>
-                    <div className="eyebrow mt-1">{t.p}</div>
+                  <figcaption className="mt-6 border-t border-border/20 pt-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">{t.n}</div>
+                      <div className="eyebrow mt-0.5">{t.p}</div>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-gold">
+                      {[...Array(5)].map((_, idx) => (
+                        <Star key={idx} size={12} className="fill-gold text-gold" />
+                      ))}
+                    </div>
                   </figcaption>
                 </motion.figure>
               );
@@ -1162,6 +1433,129 @@ function Testimonials({ testimonials = [] }: { testimonials?: any[] }) {
           )}
         </div>
       </div>
+
+      {/* Public Review Submission Modal */}
+      <AnimatePresence>
+        {isReviewModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg overflow-hidden rounded-sm border border-gold/30 bg-charcoal p-6 md:p-8 text-cream shadow-2xl"
+            >
+              <div className="flex justify-between items-center border-b border-cream/10 pb-4 mb-6">
+                <div>
+                  <h3 className="font-display font-medium text-2xl text-cream">
+                    Write a Client Review
+                  </h3>
+                  <p className="text-xs text-cream/60 mt-1">
+                    Your words will be published after review by our studio.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsReviewModalOpen(false)}
+                  className="text-cream/40 hover:text-white p-1 transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleReviewSubmit} className="space-y-5 text-left">
+                <div>
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-cream/60 block mb-1.5 font-medium">
+                    Your Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="e.g. Rohan & Ananya Mehta"
+                    className="w-full bg-cream/5 border border-cream/15 rounded-sm p-3 text-sm text-cream placeholder-cream/30 outline-none focus:border-gold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-cream/60 block mb-1.5 font-medium">
+                    Location / Space Type (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. Sadashivanagar Villa"
+                    className="w-full bg-cream/5 border border-cream/15 rounded-sm p-3 text-sm text-cream placeholder-cream/30 outline-none focus:border-gold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-cream/60 block mb-1.5 font-medium">
+                    Rating
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setRating(star)}
+                        className="p-1 text-gold cursor-pointer transition-transform hover:scale-125"
+                      >
+                        <Star
+                          size={22}
+                          className={star <= rating ? "fill-gold text-gold" : "text-cream/20"}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-xs text-cream/60 ml-2">{rating} / 5 Stars</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-cream/60 font-medium">
+                      Your Words * (Max 220 characters for uniform layout)
+                    </label>
+                    <span
+                      className={`text-xs ${
+                        reviewContent.length >= 200 ? "text-[#cb2026] font-bold" : "text-cream/50"
+                      }`}
+                    >
+                      {reviewContent.length} / 220
+                    </span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    maxLength={220}
+                    value={reviewContent}
+                    onChange={(e) => setReviewContent(e.target.value)}
+                    placeholder="Share your experience working with Studio Young Designs..."
+                    className="w-full bg-cream/5 border border-cream/15 rounded-sm p-3 text-sm text-cream placeholder-cream/30 outline-none focus:border-gold resize-none"
+                    required
+                  />
+                </div>
+
+                <div className="pt-3 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewModalOpen(false)}
+                    className="flex-1 border border-cream/20 bg-transparent hover:bg-cream/10 text-cream rounded-sm py-3 text-xs uppercase tracking-widest transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="flex-1 bg-gold text-charcoal hover:bg-amber-400 rounded-sm py-3 text-xs uppercase tracking-widest font-bold transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {submittingReview ? "Submitting..." : "Submit Review"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -1620,6 +2014,7 @@ function Home() {
       <Why config={config} items={whyItems} />
       <Services services={services} config={config} />
       <Portfolio />
+      <VideoShowcase config={config} />
       <Marquee
         dark
         items={[

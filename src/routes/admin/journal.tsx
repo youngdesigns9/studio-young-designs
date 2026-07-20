@@ -30,6 +30,7 @@ interface Post {
   image_url: string;
   read_time: string;
   category: string;
+  tags?: string[] | string;
   is_visible: boolean;
   published_date: string;
 }
@@ -48,6 +49,7 @@ function JournalComponent() {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("Design Theory");
   const [readTime, setReadTime] = useState("5 min read");
+  const [tagsInput, setTagsInput] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -108,6 +110,9 @@ function JournalComponent() {
     setContent(post.content);
     setCategory(post.category);
     setReadTime(post.read_time);
+    setTagsInput(
+      post.tags ? (Array.isArray(post.tags) ? post.tags.join(", ") : String(post.tags)) : "",
+    );
     setPreviewUrl(post.image_url);
     setIsModalOpen(true);
   };
@@ -144,39 +149,87 @@ function JournalComponent() {
         finalImageUrl = await uploadCoverFile(imageFile);
       }
 
+      const tagsArray = tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
       if (editingPost) {
+        const updatePayload: any = {
+          title,
+          slug,
+          excerpt,
+          content,
+          category,
+          read_time: readTime,
+          image_url: finalImageUrl,
+        };
+        if (tagsInput.trim()) {
+          updatePayload.tags = tagsArray;
+        }
+
         const { error } = await supabase
           .from("journal_posts")
-          .update({
-            title,
-            slug,
-            excerpt,
-            content,
-            category,
-            read_time: readTime,
-            image_url: finalImageUrl,
-          })
+          .update(updatePayload)
           .eq("id", editingPost.id);
 
-        if (error) throw error;
-        toast.success("Journal article updated successfully");
+        if (
+          error &&
+          (error.message?.includes("tags") ||
+            error.code === "PGRST204" ||
+            error.code === "42703" ||
+            error.message?.includes("column"))
+        ) {
+          delete updatePayload.tags;
+          const retry = await supabase
+            .from("journal_posts")
+            .update(updatePayload)
+            .eq("id", editingPost.id);
+          if (retry.error) throw retry.error;
+          toast.warning(
+            "Article updated! (Tip: Run 'ALTER TABLE journal_posts ADD COLUMN tags TEXT[];' in Supabase SQL editor to persist tags).",
+          );
+        } else if (error) {
+          throw error;
+        } else {
+          toast.success("Journal article updated successfully");
+        }
       } else {
-        const { error } = await supabase.from("journal_posts").insert([
-          {
-            title,
-            slug,
-            excerpt,
-            content,
-            category,
-            read_time: readTime,
-            image_url: finalImageUrl,
-            is_visible: true,
-            published_date: new Date().toISOString(),
-          },
-        ]);
+        const insertPayload: any = {
+          title,
+          slug,
+          excerpt,
+          content,
+          category,
+          read_time: readTime,
+          image_url: finalImageUrl,
+          is_visible: true,
+          published_date: new Date().toISOString(),
+        };
+        if (tagsInput.trim()) {
+          insertPayload.tags = tagsArray;
+        }
 
-        if (error) throw error;
-        toast.success("New journal article published successfully!");
+        const { error } = await supabase.from("journal_posts").insert([insertPayload]);
+
+        if (
+          error &&
+          (error.message?.includes("tags") ||
+            error.code === "PGRST204" ||
+            error.code === "42703" ||
+            error.message?.includes("column"))
+        ) {
+          delete insertPayload.tags;
+          const retry = await supabase.from("journal_posts").insert([insertPayload]);
+          if (retry.error) throw retry.error;
+          toast.warning(
+            "New article published! (Tip: Run 'ALTER TABLE journal_posts ADD COLUMN tags TEXT[];' in Supabase SQL editor to persist tags).",
+          );
+        } else if (error) {
+          throw error;
+        } else {
+          toast.success("New journal article published successfully!");
+        }
       }
 
       setIsModalOpen(false);
@@ -234,6 +287,7 @@ function JournalComponent() {
     setContent("");
     setCategory("Design Theory");
     setReadTime("5 min read");
+    setTagsInput("");
     setImageFile(null);
     setPreviewUrl(null);
     setEditingPost(null);
@@ -310,6 +364,20 @@ function JournalComponent() {
                 <p className="text-[11px] text-stone-400 dark:text-stone-500 line-clamp-2 leading-relaxed">
                   {post.excerpt}
                 </p>
+                {post.tags && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {(Array.isArray(post.tags) ? post.tags : String(post.tags).split(",")).map(
+                      (t, idx) => (
+                        <span
+                          key={idx}
+                          className="bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 text-[9px] px-1.5 py-0.5 rounded font-medium"
+                        >
+                          #{t.trim()}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action Operations */}
@@ -398,6 +466,7 @@ function JournalComponent() {
                       type="text"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
+                      placeholder="e.g. Design Theory, Kitchen Planning"
                       className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-2.5 text-xs text-stone-900 dark:text-white outline-none focus:border-[#cb2026] focus:bg-white dark:focus:bg-transparent"
                       required
                     />
@@ -410,10 +479,27 @@ function JournalComponent() {
                       type="text"
                       value={readTime}
                       onChange={(e) => setReadTime(e.target.value)}
+                      placeholder="e.g. 5 min read"
                       className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-2.5 text-xs text-stone-900 dark:text-white outline-none focus:border-[#cb2026] focus:bg-white dark:focus:bg-transparent"
                       required
                     />
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-bold block">
+                    Article Tags (Comma-Separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={tagsInput}
+                    onChange={(e) => setTagsInput(e.target.value)}
+                    placeholder="e.g. Woodcraft, Joinery, Walnut, Bangalore"
+                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-2.5 text-xs text-stone-900 dark:text-white outline-none focus:border-[#cb2026] focus:bg-white dark:focus:bg-transparent"
+                  />
+                  <p className="text-[10px] text-stone-400 dark:text-stone-550 italic">
+                    Enter tags separated by commas.
+                  </p>
                 </div>
 
                 <div className="space-y-1">
