@@ -247,27 +247,38 @@ function Hero({
 
           {/* 3D Title — each word enters from rotateX with blur */}
           <h1 className="font-display leading-[1.02] tracking-tight text-white text-[10vw] sm:text-6xl md:text-7xl lg:text-[5.5rem] flex flex-wrap gap-x-[0.28em] gap-y-2">
-            {(config.hero_title || "Bespoke spaces, crafted over forty years.")
-              .split(" ")
-              .map((w, i) => {
-                const isHighlight =
-                  w.toLowerCase().includes("forty") ||
-                  w.includes("40") ||
-                  w.toLowerCase().includes("years");
-                return (
-                  <span key={i} className="inline-block overflow-hidden pb-2 align-bottom">
-                    <motion.span
-                      className="inline-block"
-                      initial={{ y: "110%", rotateX: 60, opacity: 0, filter: "blur(8px)" }}
-                      animate={{ y: "0%", rotateX: 0, opacity: 1, filter: "blur(0px)" }}
-                      transition={{ duration: 1.2, delay: 0.3 + i * 0.08, ease: EASE_SMOOTH }}
-                      style={{ transformOrigin: "bottom center" }}
-                    >
-                      {isHighlight ? <Highlight dark>{w}</Highlight> : w}
-                    </motion.span>
-                  </span>
-                );
-              })}
+            {(() => {
+              const rawTitle = config.hero_title || "Bespoke spaces, crafted over *forty years*.";
+              const parsedWords = rawTitle.includes("*")
+                ? rawTitle.split(/(\*[^*]+\*)/g).filter(Boolean).flatMap((part) => {
+                    if (part.startsWith("*") && part.endsWith("*")) {
+                      return part.slice(1, -1).split(/\s+/).filter(Boolean).map((w) => ({ word: w, isHighlight: true }));
+                    }
+                    return part.split(/\s+/).filter(Boolean).map((w) => ({ word: w, isHighlight: false }));
+                  })
+                : rawTitle.split(/\s+/).filter(Boolean).map((w) => ({
+                    word: w,
+                    isHighlight:
+                      w.toLowerCase().includes("forty") ||
+                      w.includes("40") ||
+                      w.toLowerCase().includes("years") ||
+                      w.includes("45"),
+                  }));
+
+              return parsedWords.map(({ word: w, isHighlight }, i) => (
+                <span key={i} className="inline-block overflow-hidden pb-2 align-bottom">
+                  <motion.span
+                    className="inline-block"
+                    initial={{ y: "110%", rotateX: 60, opacity: 0, filter: "blur(8px)" }}
+                    animate={{ y: "0%", rotateX: 0, opacity: 1, filter: "blur(0px)" }}
+                    transition={{ duration: 1.2, delay: 0.3 + i * 0.08, ease: EASE_SMOOTH }}
+                    style={{ transformOrigin: "bottom center" }}
+                  >
+                    {isHighlight ? <Highlight dark>{w}</Highlight> : w}
+                  </motion.span>
+                </span>
+              ));
+            })()}
           </h1>
 
           <motion.p

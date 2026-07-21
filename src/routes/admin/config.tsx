@@ -19,6 +19,7 @@ import {
   Trash2,
   Plus,
   BookOpen,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -441,20 +442,73 @@ function ConfigComponent() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6 max-w-3xl text-stone-900 dark:text-white"
               >
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
-                    Hero Title (Headline)
-                  </label>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase tracking-widest text-[#cb2026] font-bold">
+                      Hero Title (Headline)
+                    </label>
+                    <span className="text-[10px] text-stone-400 dark:text-stone-500">
+                      Click any word below to toggle gold highlight
+                    </span>
+                  </div>
                   <textarea
                     value={config.hero_title || ""}
                     onChange={(e) => handleTextChange("hero_title", e.target.value)}
                     rows={2}
                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded p-3 text-stone-900 dark:text-white focus:border-[#cb2026] focus:bg-white dark:focus:bg-transparent outline-none text-sm font-semibold"
                   />
-                  <p className="text-[10px] text-stone-400 dark:text-stone-550 italic">
-                    Tip: Use spaces to split. Words matching "forty" or "years" are highlighted in
-                    logo red.
-                  </p>
+
+                  {/* Interactive Word Click Highlight Picker */}
+                  <div className="p-3.5 bg-stone-100/70 dark:bg-stone-900/60 rounded-lg border border-stone-200/80 dark:border-stone-800 space-y-2.5">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-stone-600 dark:text-stone-300">
+                      Interactive Word Highlight Selector:
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(config.hero_title || "Bespoke spaces, crafted over *45+ years*.")
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .map((w, idx, arr) => {
+                          const cleanWord = w.replace(/\*/g, "");
+                          const isHighlighted =
+                            (w.startsWith("*") && w.endsWith("*")) ||
+                            cleanWord.toLowerCase().includes("forty") ||
+                            cleanWord.includes("40") ||
+                            cleanWord.toLowerCase().includes("years") ||
+                            cleanWord.includes("45");
+
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                const newWords = arr.map((item, i) => {
+                                  if (i === idx) {
+                                    if (item.startsWith("*") && item.endsWith("*")) {
+                                      return item.slice(1, -1);
+                                    } else {
+                                      return `*${item.replace(/\*/g, "")}*`;
+                                    }
+                                  }
+                                  return item;
+                                });
+                                handleTextChange("hero_title", newWords.join(" "));
+                              }}
+                              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer border flex items-center gap-1.5 ${
+                                isHighlighted
+                                  ? "bg-amber-500 text-white border-amber-600 shadow-sm"
+                                  : "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:border-amber-400"
+                              }`}
+                            >
+                              {isHighlighted && <Star size={11} className="fill-current text-white" />}
+                              <span>{cleanWord}</span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                    <p className="text-[10px] text-stone-400 dark:text-stone-500 italic">
+                      💡 Tip: Click any word above to toggle gold highlight on the homepage hero title, or type asterisks manually in the box (e.g. <code className="text-amber-600 dark:text-amber-400 font-mono">*45+ years*</code>).
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
