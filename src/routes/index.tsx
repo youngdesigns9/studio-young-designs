@@ -178,7 +178,7 @@ function Hero({
     if (heroSlidesList.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlidesList.length);
-    }, 10000);
+    }, 2000);
     return () => clearInterval(timer);
   }, [heroSlidesList.length]);
 
