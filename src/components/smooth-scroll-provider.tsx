@@ -1,11 +1,22 @@
 import React, { useEffect, useRef } from "react";
 import Lenis from "lenis";
+import { useLocation } from "@tanstack/react-router";
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Do NOT initialize Lenis on /admin routes to allow native mouse wheel scrolling in admin containers
+    if (location.pathname.startsWith("/admin")) {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+      return;
+    }
 
     // Respect user's reduced motion preferences
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -24,18 +35,22 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     lenisRef.current = lenis;
 
     function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
+      if (lenisRef.current) {
+        lenisRef.current.raf(time);
+        requestAnimationFrame(raf);
+      }
     }
 
     const rafId = requestAnimationFrame(raf);
 
     return () => {
       cancelAnimationFrame(rafId);
-      lenis.destroy();
-      lenisRef.current = null;
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
     };
-  }, []);
+  }, [location.pathname]);
 
   return <>{children}</>;
 }
