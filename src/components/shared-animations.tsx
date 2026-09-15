@@ -744,7 +744,7 @@ export function Footer() {
             transition={{ duration: 1, delay: 0.5 }}
             className="text-[10px] uppercase tracking-[0.24em] text-cream/40 font-sans"
           >
-            Copyright © 2025 Studio Young Designs · All Rights Reserved
+            Copyright © 2026 Studio Young Designs · All Rights Reserved
           </motion.div>
         </div>
       </div>
