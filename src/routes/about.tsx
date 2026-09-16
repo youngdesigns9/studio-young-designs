@@ -351,7 +351,7 @@ function AboutPage() {
               </div>
             </Reveal3D>
             <SplitHeading
-              text="The minds and hands behind four decades of design."
+              text="The Hands, Minds & Passion Behind Our Legacy."
               className="text-3xl md:text-4xl text-cream font-display"
             />
           </div>
