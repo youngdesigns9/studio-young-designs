@@ -218,7 +218,7 @@ function AdminLayoutComponent() {
                 </span>
                 <input
                   type="email"
-                  placeholder="admin@studioyoung.in"
+                  placeholder="Enter administrator email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full rounded border pl-10 pr-4 py-2.5 text-xs outline-none transition-all focus:border-[#cb2026] focus:bg-transparent ${
