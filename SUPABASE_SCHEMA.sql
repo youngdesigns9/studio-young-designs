@@ -202,29 +202,10 @@ USING (bucket_id = 'studio-young-assets' AND auth.role() = 'authenticated');
 
 
 -- ==========================================
--- SEED DEFAULT ADMIN USER
+-- ADMIN USER SETUP
 -- ==========================================
--- Run this SQL block to seed your primary admin user.
--- Email: admin@studioyoung.in
--- Password: #StudioYoung1981 (Change this in production)
-
-INSERT INTO auth.users (
-  instance_id, id, aud, role, email, encrypted_password, 
-  email_confirmed_at, recovery_sent_at, last_sign_in_at, 
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, 
-  confirmation_token, email_change, email_change_token_new, recovery_token
-)
-SELECT 
-  '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 
-  'admin@studioyoung.in', extensions.crypt('#StudioYoung1981', extensions.gen_salt('bf')), 
-  now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', now(), now(), '', '', '', ''
-WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@studioyoung.in');
-
-INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
-SELECT gen_random_uuid(), id, format('{"sub":"%s","email":"%s"}', id, email)::jsonb, 'email', id::text, now(), now(), now()
-FROM auth.users WHERE email = 'admin@studioyoung.in'
-ON CONFLICT DO NOTHING;
-
+-- Create administrator accounts through Authentication > Users in the
+-- Supabase dashboard. Never commit administrator emails or passwords.
 
 -- ==========================================
 -- 8. STORAGE BUCKET & RLS POLICIES
