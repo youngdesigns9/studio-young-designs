@@ -33,5 +33,17 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/wardrobes/",
+      "destination": "/services/wardrobes",
+      "statusCode": 301
+    },
+    {
+      "source": "/wardrobes",
+      "destination": "/services/wardrobes",
+      "statusCode": 301
+    }
   ]
 }
